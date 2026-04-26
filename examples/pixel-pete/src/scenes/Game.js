@@ -11,13 +11,27 @@ export default class Game extends Phaser.Scene {
   }
 
   create() {
-    this.physics.world.gravity.set(0, 600);
-
     const levels = this.registry.get('levels');
     const manifest = this.registry.get('manifest');
     const level = levels[this.levelIndex];
     const palette = manifest.tiles;
     const tileSize = palette.tileSize;
+    const sf = tileSize / 16;            // physics scale: speeds, gravity, jump scale with tileSize
+    this.tileSize = tileSize;
+    this.sf = sf;
+
+    this.physics.world.gravity.set(0, 600 * sf);
+
+    const worldW = level.size[0] * tileSize;
+    const worldH = level.size[1] * tileSize;
+
+    // Parallax background — drawn first so the tilemap renders on top.
+    if (this.textures.exists('bg')) {
+      const bg = this.add.image(worldW / 2, worldH / 2, 'bg').setDepth(-100);
+      bg.setDisplaySize(worldW, worldH);
+      const sFactor = manifest.bg?.scrollFactor ?? 0.3;
+      bg.setScrollFactor(sFactor);
+    }
 
     const map = this.make.tilemap({ data: level.tiles, tileWidth: tileSize, tileHeight: tileSize });
     const tileset = map.addTilesetImage('tiles', 'tiles', tileSize, tileSize, 0, 0);
@@ -25,17 +39,8 @@ export default class Game extends Phaser.Scene {
     const impassableIndices = palette.passable.map((p, i) => p ? -1 : i).filter((i) => i >= 0);
     layer.setCollision(impassableIndices);
 
-    this.cameras.main.setBounds(0, 0, level.size[0] * tileSize, level.size[1] * tileSize);
-    this.physics.world.setBounds(0, 0, level.size[0] * tileSize, level.size[1] * tileSize + 200);
-
-    // Soft parallax-ish backdrop: a few twinkling stars on the sky tiles
-    this.starGfx = this.add.graphics().setDepth(-1);
-    for (let i = 0; i < 24; i++) {
-      const sx = Phaser.Math.Between(0, level.size[0] * tileSize);
-      const sy = Phaser.Math.Between(0, level.size[1] * tileSize / 2);
-      this.starGfx.fillStyle(0xffffff, 0.4 + Math.random() * 0.5);
-      this.starGfx.fillRect(sx, sy, 1, 1);
-    }
+    this.cameras.main.setBounds(0, 0, worldW, worldH);
+    this.physics.world.setBounds(0, 0, worldW, worldH + 200 * sf);
 
     const findSheet = (entityId) => {
       for (const s of manifest.sprites) {
@@ -146,6 +151,10 @@ export default class Game extends Phaser.Scene {
   }
 
   collectCoin(coin) {
+    if (coin.collected) return;          // overlap fires every frame; only count once
+    coin.collected = true;
+    if (coin.body) coin.body.enable = false;
+    this.tweens.killTweensOf(coin);      // cancel the spin/bob loops so the pop reads cleanly
     // Pop effect: scale punch + fade out + small particle burst
     this.tweens.add({
       targets: coin,
@@ -179,7 +188,7 @@ export default class Game extends Phaser.Scene {
     if (this.iframes || this.gameOver) return;
     this.iframes = true;
     this.playerHp--;
-    this.player.setVelocityY(-220);
+    this.player.setVelocityY(-220 * this.sf);
     this.cameras.main.shake(140, 0.008);
     // Red tint flash
     this.player.setTint(0xff5555);
@@ -204,7 +213,7 @@ export default class Game extends Phaser.Scene {
 
   update() {
     if (!this.player || this.gameOver) return;
-    const speed = 120;
+    const speed = 120 * this.sf;
     const b = this.player.body;
     const left = this.cursors.left.isDown || this.keys.A.isDown;
     const right = this.cursors.right.isDown || this.keys.D.isDown;
@@ -218,7 +227,7 @@ export default class Game extends Phaser.Scene {
     else            { b.setVelocityX(0); }
 
     if (jumpPressed && b.blocked.down) {
-      b.setVelocityY(-330);
+      b.setVelocityY(-330 * this.sf);
       // Squash on takeoff
       this.tweens.add({ targets: this.player, scaleY: 0.85, scaleX: 1.15, duration: 90, yoyo: true });
     }
@@ -240,7 +249,7 @@ export default class Game extends Phaser.Scene {
       if (enemy.body.blocked.right) enemy.dirX = -1;
     }
 
-    if (this.player.y > 400) this.lose();
+    if (this.player.y > this.cameras.main.getBounds().bottom + 60 * this.sf) this.lose();
 
     this.updateState();
   }

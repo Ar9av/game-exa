@@ -212,7 +212,7 @@ function colorToHex(phrase) {
 /**
  * Procedural placeholder sprites. Each entity gets a row; each animation state
  * gets a column with a distinct silhouette so movement/state changes are visible
- * in tests. Useful when iterating on the framework without burning FAL credits.
+ * in tests. Useful when iterating on the framework without burning GPT Image 2 credits.
  */
 export async function generateSpritesProcedural({ entities, outDir, relDir, log }) {
   await mkdir(outDir, { recursive: true });

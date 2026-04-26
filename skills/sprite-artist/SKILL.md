@@ -1,11 +1,11 @@
 ---
 name: sprite-artist
-description: Generates pixel-art sprite sheets for a game's entities and emits a manifest (row=entity, col=animation state). Wraps an external image-generation skill (fal.ai GPT-Image-2 by default) with deterministic post-processing (magenta chroma key → alpha). Falls back to procedural placeholder sprites when no API key is available. Use after game-designer has produced entities.
+description: Generates pixel-art sprite sheets for a game's entities using GPT Image 2 (gpt-image-2) and emits a manifest (row=entity, col=animation state). Always defaults to low quality; post-processes magenta to alpha via sharp. Falls back to procedural placeholder cells when no API key is available. Use after game-designer has produced entities.
 ---
 
 # Sprite Artist
 
-Turns GDD entities into Phaser-ready sprite sheets and a manifest the codesmith consumes by name.
+Turns GDD entities into Phaser-ready sprite sheets and a manifest the codesmith consumes by name. Uses **GPT Image 2** (`gpt-image-2`) — OpenAI's state-of-the-art image generation model — by default. Available via fal.ai (default provider, requires `FAL_KEY`) or directly through the OpenAI Images API (requires `OPENAI_API_KEY`).
 
 ## When to use
 
@@ -15,8 +15,8 @@ After `game-designer` produces a GDD. The orchestrator passes the entities array
 
 | Mode | Trigger | Cost | Output |
 |---|---|---|---|
-| **Image-generation** | `FAL_KEY` set, `--placeholder` not passed | ~$0.01-0.05 per sheet | Vivid pixel-art sprites |
-| **Procedural fallback** | No `FAL_KEY`, or `--placeholder` flag | Free | Flat-color placeholder cells |
+| **GPT Image 2** | `FAL_KEY` or `OPENAI_API_KEY` set, `--placeholder` not passed | ~$0.01-0.05 per sheet at `low` quality | Vivid pixel-art sprites |
+| **Procedural fallback** | No key, or `--placeholder` flag | Free | Flat-color placeholder cells |
 
 Both modes produce identical manifests, so downstream stages don't care which was used.
 
@@ -56,10 +56,11 @@ The complete manifest:
 6. Write `public/assets/manifest.json` (will be merged with tile-artist output later).
 7. Update `game-state.json` `assets.sprites`.
 
-## Image-generation mode details
+## GPT Image 2 mode details
 
-- Uses fal.ai GPT-Image-2 endpoint (see `references/fal-api.md`).
-- Default quality `low` (cheapest). Bumpable to `medium`/`high` via `--quality` flag.
+- Uses **GPT Image 2** (`gpt-image-2`). See `references/gpt-image-2.md` for endpoint, request shape, and provider options.
+- Default provider: fal.ai (`https://fal.run/openai/gpt-image-2`). Drop-in alternative: OpenAI Images API (`https://api.openai.com/v1/images/generations`).
+- **Default quality: `low`** — always start here for prototyping and framework iteration. Bump to `medium`/`high` only when explicitly asked.
 - Background MUST be magenta (`#FF00FF`) — better chroma key fidelity than black against dark sprites.
 - Image dimensions must satisfy: multiples of 16; ratio ≤ 3:1; total px ∈ [655360, 8294400]. Auto-pick `cellPx` to satisfy.
 - After generation, post-process: every pixel where `R>200 && G<80 && B>200` → `alpha=0`. Done with `sharp`.
@@ -79,11 +80,9 @@ The complete manifest:
 
 ## References
 
-- `references/fal-api.md` — fal.ai GPT-Image-2 endpoint, request body, constraints, error codes.
-- `references/chroma-key.md` — magenta vs black background trade-offs and pixel-replacement logic.
-- `references/prompt-template.md` — the prompt structure used in image-gen mode (rows × cols layout instructions).
+- `references/gpt-image-2.md` — GPT Image 2 endpoint, request body, constraints, content-filter notes, provider options (fal.ai default + OpenAI direct).
 
 ## Dependencies
 
 - `sharp` — image post-processing (npm dep).
-- External: `~/.all-skills/sprite-sheet/` skill must be installed for image-gen mode (procedural mode has no external deps).
+- External (optional, for full-fidelity prompt template): `~/.all-skills/sprite-sheet/` skill provides one battle-tested wrapper. The skill's GPT Image 2 mode also runs without it via the bundled direct-call script.

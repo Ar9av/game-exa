@@ -1,11 +1,11 @@
 ---
 name: gameforge
-description: Orchestrator skill that turns a one-line description into a runnable Phaser 3 game. Coordinates seven sub-skills (game-designer, world-architect, sprite-artist, tile-artist, codesmith, playtester, refiner) into a deterministic-where-possible, LLM-where-necessary pipeline. Use when the user wants to generate, refine, or test a 2D HTML5 game from natural language.
+description: Orchestrator skill that turns a one-line description into a runnable Phaser 3 game. Coordinates eight sub-skills (game-designer, world-architect, sprite-artist, tile-artist, bg-artist, codesmith, playtester, refiner) into a deterministic-where-possible, LLM-where-necessary pipeline. Image generation uses GPT Image 2 (gpt-image-2) at low quality by default. Use when the user wants to generate, refine, or test a 2D HTML5 game from natural language.
 ---
 
 # Gameforge — Game Generation Orchestrator
 
-Drives the full game-creation pipeline. The host agent (you) is the one calling LLM-bearing sub-skills; this skill describes the pipeline shape, the shared state file, validation gates, and halt conditions.
+Drives the full game-creation pipeline. The host agent (you) is the one calling LLM-bearing sub-skills; this skill describes the pipeline shape, the shared state file, validation gates, and halt conditions. All image generation goes through **GPT Image 2** (`gpt-image-2`) at `quality: low` by default.
 
 ## When to use
 
@@ -19,19 +19,22 @@ Drives the full game-creation pipeline. The host agent (you) is the one calling 
 ```
 description ─▶ game-designer ─▶ world-architect ─▶ sprite-artist ┐
                                                   tile-artist    ├─▶ codesmith ─▶ playtester ─▶ refiner ─▶ playtester
-                                                                  ┘                                ▲
+                                                  bg-artist      ┘                                ▲
                                                                                                    │ (bounded retry, max 3)
 ```
 
 1. **game-designer** turns prompt → `gdd.json` (GDD JSON).
 2. **world-architect** turns GDD → `levels.json` (tile-based level layouts).
-3. **sprite-artist** turns GDD entities → sprite sheets + manifest (run in parallel with tile-artist).
-4. **tile-artist** turns GDD tile palette → `tiles.png` + tile metadata.
-5. **codesmith** turns GDD + levels + manifest → `src/scenes/Game.js` (and optional helpers).
-6. **playtester** boots the game, runs scenarios, captures screenshots, diffs against baselines, returns structured failures.
-7. **refiner** consumes failures + current source → patched files. Loop back to playtester. Cap at 3 iterations.
+3. **sprite-artist** turns GDD entities → sprite sheets + manifest. Uses **GPT Image 2** (`gpt-image-2`) by default at `quality: low`.
+4. **tile-artist** turns GDD tile palette → `tiles.png` + tile metadata. GPT Image 2 mode produces real pixel-art tiles; procedural mode is the free fallback.
+5. **bg-artist** generates a parallax background image (sky, cave, space, forest, etc.) via GPT Image 2. Optional — skipped for genres that don't benefit (top-down-adventure, abstract puzzle).
+6. **codesmith** turns GDD + levels + manifest → `src/scenes/Game.js` (and optional helpers).
+7. **playtester** boots the game, runs scenarios, captures screenshots, diffs against baselines, returns structured failures.
+8. **refiner** consumes failures + current source → patched files. Loop back to playtester. Cap at 3 iterations.
 
-Stages 3 and 4 are deterministic helpers (no LLM). Stages 1, 2, 5, 7 are LLM-driven via host-agent reasoning. Stage 6 is deterministic.
+Stages 3, 4, 5 are deterministic helpers (image generation is delegated to the model; the skill's logic — chunking, dimensions, chroma-key, manifest write — is pure). Stages 1, 2, 6, 8 are LLM-driven via host-agent reasoning. Stage 7 is deterministic.
+
+Stages 3, 4, 5 can run in parallel (independent inputs).
 
 ## Shared state — `game-state.json`
 
@@ -94,12 +97,14 @@ Every animation is `<ENTITY_ID>-<state-lowercase>`, e.g. `KNIGHT-walk`, `SLIME-h
 1. Ask user for project name (or accept arg). Run `scripts/init_project.mjs <name>` to scaffold.
 2. Invoke **game-designer** with the user's description. Save GDD into `game-state.json`. Validate.
 3. Invoke **world-architect** with the GDD. Save levels. Validate.
-4. Invoke **sprite-artist** (with `--placeholder` for fast/free iteration, or full FAL mode). Writes sheets + updates manifest.
-5. Invoke **tile-artist** with the palette. Writes `tiles.png` + manifest.
-6. Write `public/assets/manifest.json` and `public/data/levels.json` from state.
-7. Invoke **codesmith** with GDD + levels + manifest. Writes `src/scenes/Game.js` (and optional helpers under `src/`).
-8. Invoke **playtester**. If failures, invoke **refiner**. Loop max 3.
-9. Report final status: passed / failed / partial. If passed, tell user to `cd <project> && npm run dev`.
+4. In parallel:
+   - Invoke **sprite-artist** (default: GPT Image 2 at `quality: low`; `--placeholder` for free iteration).
+   - Invoke **tile-artist** (`generate_tiles_gpt.mjs` for real pixel-art tiles, or `paint_tiles.mjs` for procedural).
+   - Invoke **bg-artist** (`generate_bg.mjs --theme <theme>`). Skip when genre is top-down-adventure or abstract puzzle.
+5. Write `public/assets/manifest.json` and `public/data/levels.json` from state (the asset skills merge into the manifest as they go).
+6. Invoke **codesmith** with GDD + levels + manifest. Writes `src/scenes/Game.js` (and optional helpers under `src/`). Codesmith reads `manifest.bg` and adds the parallax-background pattern when present.
+7. Invoke **playtester**. If failures, invoke **refiner**. Loop max 3.
+8. Report final status: passed / failed / partial. If passed, tell user to `cd <project> && npm run dev`.
 
 ### Path B — refine an existing project
 
@@ -113,7 +118,7 @@ Every animation is `<ENTITY_ID>-<state-lowercase>`, e.g. `KNIGHT-walk`, `SLIME-h
 - **Schema validation failure** at any stage → halt, surface to user with the validation error. Do not loop.
 - **3 refiner iterations without pass** → halt, surface failures. Do not silently mark complete.
 - **`ANTHROPIC_API_KEY` missing** when invoking an LLM sub-skill via the embedded CLI mode → fall back to host-agent (you) doing the LLM call.
-- **`FAL_KEY` missing** when sprite-artist needs an image generation → fall back to procedural sprites.
+- **`FAL_KEY` and `OPENAI_API_KEY` both missing** when an asset skill wants GPT Image 2 → fall back to procedural sprites/tiles and skip bg-artist.
 - **User cancels** (SIGINT) → exit 130.
 
 ## Embedded CLI mode

@@ -2,7 +2,9 @@
 
 A pluggable skill pack that lets any coding agent (Claude Code, Cursor, Antigravity, Cline, Aider, …) turn a one-line description into a runnable Phaser 3 game.
 
-Eight cooperating skills — `gameforge` (orchestrator), `game-designer`, `world-architect`, `sprite-artist`, `tile-artist`, `codesmith`, `playtester`, `refiner` — coordinate a deterministic-where-possible / LLM-where-necessary pipeline that produces a Game Design Document, tile-based levels, sprite sheets, gameplay code, and a headless QA loop with screenshot regression.
+Nine cooperating skills — `gameforge` (orchestrator), `game-designer`, `world-architect`, `sprite-artist`, `tile-artist`, `bg-artist`, `codesmith`, `playtester`, `refiner` — coordinate a deterministic-where-possible / LLM-where-necessary pipeline that produces a Game Design Document, tile-based levels, sprite sheets, tilesets, parallax backgrounds, gameplay code, and a headless QA loop with screenshot regression.
+
+Image generation is powered by **GPT Image 2** (`gpt-image-2`) — OpenAI's state-of-the-art image generation model — accessible via fal.ai (default provider, requires `FAL_KEY`) or directly through the OpenAI Images API (requires `OPENAI_API_KEY`). Default `quality: low` for prototyping and framework iteration.
 
 ## How it works
 
@@ -14,7 +16,8 @@ description ─▶ game-designer ─▶ world-architect ─▶ sprite-artist ┐
 ```
 
 - **LLM stages** (`game-designer`, `world-architect`, `codesmith`, `refiner`) are plain SKILL.md instruction docs. The host coding agent supplies the LLM reasoning.
-- **Deterministic stages** (`sprite-artist`, `tile-artist`, `playtester`) ship as Node scripts under each skill's `scripts/` directory. They take JSON in, produce assets / reports out, never call an LLM.
+- **Asset stages** (`sprite-artist`, `tile-artist`, `bg-artist`) ship as Node scripts that drive **GPT Image 2** for real pixel-art assets, with deterministic procedural fallbacks. They take JSON in, produce PNGs + manifest entries out.
+- **Deterministic stages** (`playtester`) ship as Node scripts under each skill's `scripts/` directory. They take JSON in, produce reports out, never call an LLM.
 - **State** lives in a single `game-state.json` at the project root; every stage reads/writes it. Per-asset projections (`public/assets/manifest.json`, `public/data/levels.json`) are derived from state and consumed by the Phaser runtime.
 
 There are no embedded LLM API calls in the SKILL.md files — your coding agent does the reasoning using its own tools. The repository also bundles an optional CLI (`bin/gameforge.mjs`) that calls Claude directly via `@anthropic-ai/sdk`, for non-agent users.
@@ -78,16 +81,17 @@ Global flags: `--json` (NDJSON on stdout), `--cwd`, `-y/--yes`, `-v/--verbose`. 
 
 Each skill has a `SKILL.md` (instructions) plus `references/` (schemas, recipes, cookbooks) and/or `scripts/` (deterministic helpers).
 
-| Skill | Role | LLM? | Scripts |
+| Skill | Role | Image gen? | Scripts |
 |---|---|---|---|
-| `gameforge` | Orchestrator: drives the pipeline, manages state, handles halt conditions | no (delegates) | `init_project.mjs`, `validate_state.mjs` |
-| `game-designer` | Prompt → GDD JSON | yes | `validate_gdd.mjs` |
-| `world-architect` | GDD → level layouts | yes | `validate_levels.mjs` |
-| `sprite-artist` | Entities → sprite sheets + manifest. fal.ai GPT-Image-2 by default; procedural fallback. | indirect (image model) | `generate_sheets.mjs`, `chroma_key.mjs` |
-| `tile-artist` | Palette → tileset PNG | no | `paint_tiles.mjs` |
-| `codesmith` | GDD + manifest → `src/scenes/Game.js` | yes | `write_files.mjs`, `validate_code.mjs` |
-| `playtester` | Headless Playwright + pixelmatch screenshot diff | no | `run_qa.mjs`, `boot_check.mjs` |
-| `refiner` | Failures → patched files | yes | `collect_files.mjs`, `apply_fixes.mjs` |
+| `gameforge` | Orchestrator: drives the pipeline, manages state, handles halt conditions | — | `init_project.mjs`, `validate_state.mjs` |
+| `game-designer` | Prompt → GDD JSON | — | `validate_gdd.mjs` |
+| `world-architect` | GDD → level layouts | — | `validate_levels.mjs` |
+| `sprite-artist` | Entities → sprite sheets + manifest. Real pixel art via **GPT Image 2**; procedural fallback. | yes | `generate_sheets.mjs`, `chroma_key.mjs` |
+| `tile-artist` | Palette → tileset PNG. **GPT Image 2** mode for real pixel-art tiles; procedural mode for free flat-color. | yes | `generate_tiles_gpt.mjs`, `paint_tiles.mjs` |
+| `bg-artist` | Genre theme → parallax background PNG. **GPT Image 2** for sky/cave/space scenes. | yes | `generate_bg.mjs` |
+| `codesmith` | GDD + manifest → `src/scenes/Game.js` | — | `write_files.mjs`, `validate_code.mjs` |
+| `playtester` | Headless Playwright + pixelmatch screenshot diff | — | `run_qa.mjs`, `boot_check.mjs` |
+| `refiner` | Failures → patched files | — | `collect_files.mjs`, `apply_fixes.mjs` |
 
 ## Validated genres
 
@@ -139,9 +143,10 @@ my-game/
 ├── index.html
 ├── public/
 │   ├── assets/
-│   │   ├── entities.png        # sprite-artist output
+│   │   ├── entities.png        # sprite-artist output (GPT Image 2 or procedural)
 │   │   ├── tiles.png           # tile-artist output
-│   │   └── manifest.json       # row/col labels + cell size
+│   │   ├── bg.png              # bg-artist output (optional, parallax)
+│   │   └── manifest.json       # row/col labels + cell size + bg metadata
 │   └── data/
 │       └── levels.json         # world-architect output
 ├── src/
@@ -160,7 +165,9 @@ my-game/
 
 ## Optional integrations
 
-- **`~/.all-skills/sprite-sheet/`** — external skill that calls fal.ai GPT-Image-2. Used by `sprite-artist` in image-gen mode. Skip with `--placeholder-sprites` for procedural fallback.
+- **`FAL_KEY`** (preferred) — provider for **GPT Image 2** (`gpt-image-2`) at `https://fal.run/openai/gpt-image-2`. Default for sprite/tile/bg generation. Cheapest path: `quality: low` + fal.ai.
+- **`OPENAI_API_KEY`** — direct alternative provider for **GPT Image 2** at `https://api.openai.com/v1/images/generations`. Same model, different request shape; the asset skills auto-detect and switch.
+- **`~/.all-skills/sprite-sheet/`** — battle-tested external skill that wraps the fal.ai endpoint. Used by `sprite-artist` when present; the bundled scripts also call GPT Image 2 directly without it.
 - **`ANTHROPIC_API_KEY`** — required for the embedded CLI's `generate` and `refine` commands. Path A doesn't need it (host agent supplies the model).
 - **System Chrome** — used by Playwright via `channel: 'chrome'` to skip the 170MB Chromium download. Falls back to bundled if unavailable.
 

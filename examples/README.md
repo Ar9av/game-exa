@@ -33,9 +33,9 @@ This boots a headless Chromium, runs the per-genre scenarios, diffs against `qa/
 
 ## Visual notes
 
-These examples use **procedural placeholder sprites** (flat-color cells with state-specific tints), not the fal.ai GPT-Image-2 output. Procedural sprites are what gameforge generates without `FAL_KEY` set or with `--placeholder-sprites` passed.
+The `slime-slayer` and `star-defender` examples use **procedural placeholder sprites** (flat-color cells with state-specific tints) — that's what gameforge generates without an image-generation API key, or with `--placeholder-sprites`. The `pixel-pete` example showcases the polished pipeline: real pixel-art sprites + a real GPT Image 2 tileset + a parallax sky background.
 
-To regenerate with real pixel-art sprites, set `FAL_KEY` and re-run:
+To regenerate any example with real **GPT Image 2** (`gpt-image-2`) assets, set `FAL_KEY` (or `OPENAI_API_KEY`) and re-run:
 
 ```bash
 cd examples/pixel-pete

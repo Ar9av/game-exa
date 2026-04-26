@@ -39,7 +39,7 @@ Adding a scenario is one entry in `src/qa/scenarios.js`. No code-gen change requ
 
 ## Why magenta backgrounds
 
-The fal.ai sprite skill emits sprites on solid backgrounds. Black backgrounds erase legitimately-dark sprite pixels (R,G,B<30 false positives). Magenta (#FF00FF) is unambiguous — `R>200 && G<80 && B>200` only matches the chroma key, never the sprite. We post-process magenta→alpha once via `sharp` and ship transparent PNGs to Phaser. Doing this at runtime in Phaser is a non-starter (per-pixel iteration on every reload).
+**GPT Image 2** (`gpt-image-2`) emits sprites on solid backgrounds. Black backgrounds erase legitimately-dark sprite pixels (R,G,B<30 false positives). Magenta (#FF00FF) is unambiguous — `R>200 && G<80 && B>200` only matches the chroma key, never the sprite. We post-process magenta→alpha once via `sharp` and ship transparent PNGs to Phaser. Doing this at runtime in Phaser is a non-starter (per-pixel iteration on every reload).
 
 ## Failure modes the framework already handles
 

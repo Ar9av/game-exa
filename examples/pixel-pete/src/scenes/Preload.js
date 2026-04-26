@@ -19,6 +19,11 @@ export default class Preload extends Phaser.Scene {
       });
     }
 
+    // Optional parallax background image.
+    if (manifest.bg) {
+      this.load.image('bg', manifest.bg.relPath);
+    }
+
     // Simple loading bar.
     const { width: W, height: H } = this.scale;
     const bar = this.add.graphics();

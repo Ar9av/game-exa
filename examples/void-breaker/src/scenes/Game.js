@@ -18,14 +18,23 @@ export default class Game extends Phaser.Scene {
     this.playerSpeed = 220;
     this.bombs = 2;
     this.lastKillTime = 0;
-    this.iframes = false;
+    this.iframes = true;   // spawn invulnerability cleared after 1.5s in create()
     this.playerAngle = 0;
   }
 
   create() {
-    // ─── Grid background ──────────────────────────────────────────────────────
+    // ─── Grid background (static render texture — no per-frame redraw) ────────
     this.gridGraphics = this.add.graphics();
-    this.drawGrid(1.0);
+    this.drawGrid();
+    // Pulse alpha via tween instead of redrawing every frame
+    this.tweens.add({
+      targets: this.gridGraphics,
+      alpha: { from: 0.5, to: 0.9 },
+      duration: 900,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
 
     // ─── Bullet texture (must be created before player ship tex uses renderTexture) ──
     this._createBulletTexture();
@@ -99,21 +108,23 @@ export default class Game extends Phaser.Scene {
     // ─── Multiplier reset timer ───────────────────────────────────────────────
     this.time.addEvent({ delay: 100, loop: true, callback: this.checkMultReset, callbackScope: this });
 
+    // Clear spawn invulnerability after 2s (wave starts at 600ms, so player gets time to move)
+    this.time.delayedCall(2000, () => { this.iframes = false; });
+
     // Start wave 1
     this.time.delayedCall(600, () => this.startWave());
 
     this.updateState();
     this.events.emit('scene-ready');
+    window.__gameReady = true;
   }
 
-  // ─── Draw grid background ───────────────────────────────────────────────────
-  drawGrid(alpha) {
-    this.gridGraphics.clear();
-    this.gridGraphics.lineStyle(1, 0x001144, alpha * 0.8);
+  // ─── Draw grid background (called once in create) ──────────────────────────
+  drawGrid() {
+    this.gridGraphics.lineStyle(1, 0x001144, 0.8);
     for (let x = 0; x <= W; x += GRID_SIZE) this.gridGraphics.lineBetween(x, 0, x, H);
     for (let y = 0; y <= H; y += GRID_SIZE) this.gridGraphics.lineBetween(0, y, W, y);
-    // Brighter center lines
-    this.gridGraphics.lineStyle(1, 0x0033aa, alpha * 0.6);
+    this.gridGraphics.lineStyle(1, 0x0033aa, 0.6);
     this.gridGraphics.lineBetween(W / 2, 0, W / 2, H);
     this.gridGraphics.lineBetween(0, H / 2, W, H / 2);
   }
@@ -367,16 +378,15 @@ export default class Game extends Phaser.Scene {
       rt.destroy();
     }
 
-    const count = 18;
+    const count = 8;
     for (let i = 0; i < count; i++) {
       const p = this.physics.add.image(x, y, key);
       const angle = (i / count) * Math.PI * 2;
-      const speed = Phaser.Math.Between(80, 220);
+      const speed = Phaser.Math.Between(80, 200);
       p.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
       p.setTint(color);
       p.setAlpha(1);
       p.setScale(Phaser.Math.FloatBetween(0.5, 1.2));
-      p.postFX.addGlow(color, 3);
       if (p.body) {
         p.body.setDamping(true);
         p.body.setDrag(0.88);
@@ -384,7 +394,7 @@ export default class Game extends Phaser.Scene {
       this.tweens.add({
         targets: p,
         alpha: 0,
-        duration: Phaser.Math.Between(300, 700),
+        duration: Phaser.Math.Between(250, 550),
         onComplete: () => { if (p && p.active) p.destroy(); },
       });
     }
@@ -622,19 +632,11 @@ export default class Game extends Phaser.Scene {
     };
   }
 
-  // ─── Pulse grid ───────────────────────────────────────────────────────────
-  pulseGrid() {
-    const t = this.time.now * 0.001;
-    const alpha = 0.6 + Math.sin(t * 1.2) * 0.3;
-    this.drawGrid(alpha);
-  }
-
   // ─── Main loop ────────────────────────────────────────────────────────────
   update(time, delta) {
     if (this.gameOver) return;
     if (!this.player?.active) return;
 
-    this.pulseGrid();
 
     const speed = this.playerSpeed;
     let vx = 0, vy = 0;

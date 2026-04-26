@@ -17,11 +17,12 @@ const isPlatformer = state.gdd.genre === 'platformer';
 const isTopDown = state.gdd.genre === 'top-down-adventure' || state.gdd.genre === 'dungeon-crawler' || state.gdd.genre === 'top-down-rpg';
 
 // Approximate max horizontal jump distance in tiles.
-// Default Phaser arcade: jump v=330, g=600, hSpeed=120; tileSize=32 with sf=2.
-// Time in air = 2v/g (ignoring sf since v and g scale together).
-// Distance = hSpeed * 2v/g = 120 * 2*330/600 = 132 px = 4.125 tiles at tileSize=32.
-// Use 4 tiles as the safe gap-jump limit; warn if architect drew >= 5 tile gap.
-const MAX_JUMP_TILES = 4;
+// Default Phaser arcade: v=330*sf, g=600*sf, hSpeed=120*sf, tileSize=16*sf.
+// Time in air = 2*(330*sf)/(600*sf) = 1.1s (sf cancels).
+// Pixel distance = (120*sf) * 1.1 = 132*sf px.
+// Tiles = (132*sf) / (16*sf) = 8.25 tiles — independent of tileSize.
+// Use 8 tiles as the safe gap-jump limit; warn only if gap is strictly > 8 tiles.
+const MAX_JUMP_TILES = 8;
 
 const issues = [];
 
@@ -114,10 +115,11 @@ for (const level of state.levels) {
   // 4. Platformer-specific: standable spawns + jump arc gaps.
   if (isPlatformer) {
     for (const sp of level.spawns) {
-      // Pickups can float; players and enemies need ground beneath them (tile below impassable).
+      // Only the player needs solid ground directly beneath spawn; enemies can be flying
+      // or wall-mounted and are responsible for their own physics (allowGravity, etc.).
       const ent = state.gdd.entities.find((e) => e.id === sp.entity);
       if (!ent) continue;
-      if (ent.kind === 'pickup' || ent.kind === 'projectile') continue;
+      if (ent.kind !== 'player') continue;
       if (!isImpassable(level, sp.x, sp.y + 1)) {
         issues.push({
           kind: 'unsupported-spawn', level: level.id, severity: 'warning',

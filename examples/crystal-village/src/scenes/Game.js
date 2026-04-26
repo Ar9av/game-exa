@@ -211,7 +211,7 @@ export default class Game extends Phaser.Scene {
         );
         c.play('CRYSTAL-idle');
         this.tweens.add({ targets: c, y: c.y - 5, duration: 950, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-        if (c.postFX) c.postFX.addGlow(0x44ddff, 5, 0, false, 0.1, 14);
+        try { if (c.postFX) c.postFX.addGlow(0x44ddff, 5, 0, false, 0.1, 14); } catch (_) { /* postFX unsupported in this WebGL context */ }
       }
     }
 

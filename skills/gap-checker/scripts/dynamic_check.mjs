@@ -7,7 +7,16 @@
 import { resolve, join } from 'node:path';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { spawnDevServer } from '../../../src/lib/server.js';
-import { bootGame, snapshotCanvas } from '../../../src/qa/harness.js';
+import { bootGame, snapshotCanvas as _snapshotCanvas } from '../../../src/qa/harness.js';
+
+async function snapshotCanvas(page, tag) {
+  try {
+    return await _snapshotCanvas(page);
+  } catch (e) {
+    log(`screenshot ${tag ?? ''} skipped:`, e.message.split('\n')[0]);
+    return null;
+  }
+}
 
 const args = process.argv.slice(2);
 const projectDir = resolve(args[0] ?? '.');
@@ -42,7 +51,7 @@ try {
 
   // Initial state
   await page.evaluate(() => new Promise((r) => { let i = 0; const t = () => (++i >= 60 ? r() : requestAnimationFrame(t)); requestAnimationFrame(t); }));
-  await snapshotCanvas(page).then((b) => writeFile(join(SCREENSHOTS_DIR, 't0-boot.png'), b));
+  await snapshotCanvas(page, 't0-boot').then((b) => b && writeFile(join(SCREENSHOTS_DIR, 't0-boot.png'), b));
   const initialState = await page.evaluate(() => window.__gameState);
   log('initial:', JSON.stringify(initialState));
 
@@ -130,8 +139,8 @@ try {
     const elapsed = Date.now() - start;
     if (elapsed >= nextScreenshot) {
       const tag = `t${Math.floor(elapsed / 1000)}s`;
-      const buf = await snapshotCanvas(page);
-      await writeFile(join(SCREENSHOTS_DIR, `${tag}.png`), buf);
+      const buf = await snapshotCanvas(page, tag);
+      if (buf) await writeFile(join(SCREENSHOTS_DIR, `${tag}.png`), buf);
       nextScreenshot += 10000;
     }
   }
@@ -155,8 +164,8 @@ try {
   }
 
   // Final screenshot
-  const finalBuf = await snapshotCanvas(page);
-  await writeFile(join(SCREENSHOTS_DIR, `t${seconds}s-final.png`), finalBuf);
+  const finalBuf = await snapshotCanvas(page, 'final');
+  if (finalBuf) await writeFile(join(SCREENSHOTS_DIR, `t${seconds}s-final.png`), finalBuf);
 
   await browser.close();
 

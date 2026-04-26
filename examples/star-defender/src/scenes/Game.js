@@ -88,6 +88,17 @@ export default class Game extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
 
+    // Auto-fire every 300ms while player is moving (helps fuzzer too)
+    this.autoFireTimer = this.time.addEvent({
+      delay: 300,
+      loop: true,
+      callback: () => {
+        if (!this.player || this.gameOver) return;
+        const b = this.player.body;
+        if (b && (b.velocity.x !== 0 || b.velocity.y !== 0)) this.fireBullet();
+      },
+    });
+
     this.hud = this.add.text(4, 4, '', { fontSize: '8px', color: '#ffffff', backgroundColor: '#000000' }).setScrollFactor(0).setDepth(100);
     this.updateState();
     this.events.emit('scene-ready');

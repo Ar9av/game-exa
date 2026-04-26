@@ -1,0 +1,591 @@
+{
+  "version": 1,
+  "name": "island-quest",
+  "prompt": "A young hero explores a magical island collecting five heart crystals to restore the sacred shrine",
+  "genre": "top-down-adventure",
+  "createdAt": "2026-04-26T16:29:18.930Z",
+  "gdd": {
+    "title": "Island Quest",
+    "genre": "top-down-adventure",
+    "tagline": "A young hero explores a magical island collecting five heart crystals to restore the sacred shrine",
+    "loop": "Explore the lush island, battle forest creatures with your sword, and collect heart crystals scattered across the land. Restore all five crystals to the shrine to save the island.",
+    "winCondition": "window.__gameState.heartsCollected >= 5",
+    "loseCondition": "window.__gameState.playerHp <= 0",
+    "controls": {
+      "movement": "8-direction",
+      "actions": [
+        {
+          "key": "SPACE",
+          "name": "Sword",
+          "description": "Swing sword in facing direction"
+        }
+      ]
+    },
+    "entities": [
+      {
+        "id": "HERO",
+        "kind": "player",
+        "color": "green tunic",
+        "desc": "Young hero in a green tunic and pointy cap wielding a gleaming short sword",
+        "states": [
+          "idle",
+          "walk"
+        ],
+        "speed": 110,
+        "hp": 6
+      },
+      {
+        "id": "VILLAGER",
+        "kind": "npc",
+        "color": "warm brown",
+        "desc": "Friendly island villager in warm brown peasant clothes with a cheerful face",
+        "states": [
+          "idle",
+          "walk"
+        ],
+        "speed": 30,
+        "hp": 999
+      },
+      {
+        "id": "FOREST_SPRITE",
+        "kind": "enemy",
+        "color": "deep forest green",
+        "desc": "Mischievous forest sprite with leafy wings and thorny claws in deep green",
+        "states": [
+          "idle",
+          "walk"
+        ],
+        "speed": 70,
+        "hp": 2
+      },
+      {
+        "id": "STONE_GOLEM",
+        "kind": "enemy",
+        "color": "mossy gray stone",
+        "desc": "Lumbering stone golem covered in moss with glowing amber eyes",
+        "states": [
+          "idle",
+          "walk"
+        ],
+        "speed": 35,
+        "hp": 5
+      },
+      {
+        "id": "WIZARD",
+        "kind": "boss",
+        "color": "deep purple",
+        "desc": "Ancient dark wizard in deep purple robes with a skull staff and electric energy around hands",
+        "states": [
+          "idle",
+          "walk",
+          "cast"
+        ],
+        "speed": 50,
+        "hp": 12
+      },
+      {
+        "id": "HEART",
+        "kind": "pickup",
+        "color": "bright red crystal",
+        "desc": "Glowing bright red heart-shaped crystal radiating warm light",
+        "states": [
+          "idle"
+        ],
+        "speed": 0,
+        "hp": 0
+      }
+    ],
+    "tilesetPalette": [
+      {
+        "id": "GRASS",
+        "color": "#40A028",
+        "passable": true
+      },
+      {
+        "id": "WATER",
+        "color": "#1E5EA0",
+        "passable": false
+      },
+      {
+        "id": "WALL",
+        "color": "#787878",
+        "passable": false
+      },
+      {
+        "id": "FLOWER",
+        "color": "#E060B0",
+        "passable": true
+      },
+      {
+        "id": "TREE",
+        "color": "#1E4010",
+        "passable": false
+      }
+    ],
+    "levelHints": {
+      "size": [
+        20,
+        15
+      ],
+      "count": 1,
+      "themes": [
+        "magical island"
+      ]
+    }
+  },
+  "levels": [
+    {
+      "id": "1-1",
+      "theme": "magical island",
+      "size": [
+        20,
+        15
+      ],
+      "tiles": [
+        [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          4,
+          4,
+          4,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          4,
+          4,
+          4,
+          1
+        ],
+        [
+          1,
+          4,
+          4,
+          4,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          4,
+          4,
+          4,
+          1
+        ],
+        [
+          1,
+          4,
+          4,
+          4,
+          0,
+          0,
+          0,
+          3,
+          3,
+          3,
+          3,
+          3,
+          0,
+          0,
+          0,
+          0,
+          4,
+          4,
+          4,
+          1
+        ],
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          2,
+          0,
+          0,
+          4,
+          4,
+          0,
+          0,
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          4,
+          4,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          4,
+          4,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          1,
+          0,
+          0,
+          0,
+          3,
+          3,
+          3,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3,
+          3,
+          3,
+          3,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          1,
+          4,
+          4,
+          4,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          4,
+          4,
+          4,
+          1
+        ],
+        [
+          1,
+          4,
+          4,
+          4,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          4,
+          4,
+          4,
+          1
+        ],
+        [
+          1,
+          4,
+          4,
+          4,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          4,
+          4,
+          4,
+          1
+        ],
+        [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      ],
+      "spawns": [
+        {
+          "entity": "HERO",
+          "x": 5,
+          "y": 5
+        },
+        {
+          "entity": "VILLAGER",
+          "x": 10,
+          "y": 3
+        },
+        {
+          "entity": "FOREST_SPRITE",
+          "x": 15,
+          "y": 5
+        },
+        {
+          "entity": "FOREST_SPRITE",
+          "x": 14,
+          "y": 10
+        },
+        {
+          "entity": "STONE_GOLEM",
+          "x": 3,
+          "y": 10
+        },
+        {
+          "entity": "WIZARD",
+          "x": 10,
+          "y": 12
+        },
+        {
+          "entity": "HEART",
+          "x": 8,
+          "y": 3
+        },
+        {
+          "entity": "HEART",
+          "x": 7,
+          "y": 9
+        },
+        {
+          "entity": "HEART",
+          "x": 15,
+          "y": 8
+        },
+        {
+          "entity": "HEART",
+          "x": 5,
+          "y": 12
+        },
+        {
+          "entity": "HEART",
+          "x": 12,
+          "y": 6
+        }
+      ],
+      "goal": {
+        "kind": "entity",
+        "entityId": "WIZARD"
+      }
+    }
+  ],
+  "assets": {
+    "sprites": [
+      {
+        "sheet": "/Users/ar9av/Documents/projects/game-creation-agent/examples/island-quest/public/assets/entities.png",
+        "relSheet": "assets/entities.png",
+        "rows": [
+          "HERO",
+          "VILLAGER",
+          "FOREST_SPRITE",
+          "STONE_GOLEM",
+          "WIZARD",
+          "HEART"
+        ],
+        "cols": [
+          "idle",
+          "walk",
+          "cast"
+        ],
+        "cell": 192,
+        "bg": "magenta",
+        "textureKey": "entities-1"
+      }
+    ],
+    "tiles": {
+      "relSheet": "assets/tiles.png",
+      "tileSize": 32,
+      "ids": [
+        "GRASS",
+        "WATER",
+        "WALL",
+        "FLOWER",
+        "TREE"
+      ],
+      "passable": [
+        true,
+        false,
+        false,
+        true,
+        false
+      ]
+    },
+    "bg": null
+  },
+  "code": {
+    "entryPoint": "src/main.js",
+    "scenes": [
+      "Boot",
+      "Preload",
+      "Game"
+    ]
+  },
+  "qa": []
+}

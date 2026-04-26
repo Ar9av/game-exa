@@ -106,7 +106,7 @@ Every animation is `<ENTITY_ID>-<state-lowercase>`, e.g. `KNIGHT-walk`, `SLIME-h
 7. Invoke **playtester**. If failures, invoke **refiner**. Loop max 3.
 8. Report final status: passed / failed / partial. If passed, tell user to `cd <project> && npm run dev`.
 
-### Path B — refine an existing project
+### Refine an existing project
 
 1. Read `game-state.json` and the latest QA report (`qa/qa-report.json`).
 2. If `passed === true`, stop.
@@ -117,24 +117,24 @@ Every animation is `<ENTITY_ID>-<state-lowercase>`, e.g. `KNIGHT-walk`, `SLIME-h
 
 - **Schema validation failure** at any stage → halt, surface to user with the validation error. Do not loop.
 - **3 refiner iterations without pass** → halt, surface failures. Do not silently mark complete.
-- **`ANTHROPIC_API_KEY` missing** when invoking an LLM sub-skill via the embedded CLI mode → fall back to host-agent (you) doing the LLM call.
 - **`FAL_KEY` and `OPENAI_API_KEY` both missing** when an asset skill wants GPT Image 2 → fall back to procedural sprites/tiles and skip bg-artist.
 - **User cancels** (SIGINT) → exit 130.
 
-## Embedded CLI mode
+## Optional: multiplayer
 
-For non-agent users, this skill bundles a CLI:
+Add multiplayer to any generated game via the **multiplayer** skill:
 
 ```bash
-gameforge init <name>                     # Path A scaffolding
-gameforge generate "<description>"        # Path A pipeline
-gameforge qa                              # playtester only
-gameforge refine                          # Path B
-gameforge dev                             # vite dev server
-gameforge build                           # production bundle
+# After game is generated and running:
+node skills/multiplayer/scripts/init_server.mjs <project-dir>   # Colyseus WebSocket server
+node skills/multiplayer/scripts/patch_game.mjs <project-dir>    # patches Game.js for network sync
+
+# Optional extras:
+node skills/multiplayer/scripts/init_server.mjs <project-dir> --voice   # PeerJS voice/video
+node skills/multiplayer/scripts/init_server.mjs <project-dir> --lobby   # React lobby frontend
 ```
 
-Global flags: `--json` (NDJSON on stdout), `--cwd`, `-y / --yes`, `-v / --verbose`. Exit codes: `0` ok, `2` usage, `3` config, `4` network, `5` QA failed, `130` SIGINT.
+Supports up to 4 players, 20 Hz tick rate, TypeScript shared schemas. See `skills/multiplayer/SKILL.md`.
 
 ## References
 
@@ -146,4 +146,4 @@ Global flags: `--json` (NDJSON on stdout), `--cwd`, `-y / --yes`, `-v / --verbos
 
 - `scripts/init_project.mjs <name> [--dir path]` — scaffold from `templates/phaser-game/`
 - `scripts/validate_state.mjs <project-dir>` — schema check + invariant verification
-- `scripts/run_pipeline.mjs <project-dir>` — invoke embedded CLI pipeline (only if `ANTHROPIC_API_KEY` set)
+- `scripts/run_pipeline.mjs <project-dir>` — invoke the full pipeline (host agent drives all LLM sub-skills; no separate API key needed)

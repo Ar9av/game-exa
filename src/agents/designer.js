@@ -8,49 +8,71 @@ Output ONLY a single JSON object matching this schema:
 
 {
   "title": string,                          // short game title (1-4 words)
-  "genre": "top-down-adventure" | "platformer" | "twin-stick-shooter" | "puzzle" | "shoot-em-up" | "dungeon-crawler",
+  "genre": "top-down-adventure" | "platformer" | "action-platformer" | "twin-stick-shooter" | "puzzle" | "shoot-em-up" | "dungeon-crawler" | "beat-em-up",
   "tagline": string,                        // one-sentence pitch
   "loop": string,                           // 1-3 sentences describing the core gameplay loop
-  "winCondition": string,                   // concrete, observable in headless test (e.g. "player reaches tile (10,5)")
-  "loseCondition": string,                  // concrete (e.g. "player health <= 0", or "none" for endless)
+  "winCondition": string,                   // concrete, testable via window.__gameState
+  "loseCondition": string,                  // concrete (e.g. "window.__gameState.playerHp <= 0")
   "controls": {
     "movement": "8-direction" | "4-direction" | "platformer" | "twin-stick",
     "actions": [{ "key": string, "name": string, "description": string }]
   },
   "entities": [
     {
-      "id": string,                         // SCREAMING_SNAKE_CASE, used as sprite row label
+      "id": string,                         // SCREAMING_SNAKE_CASE
       "kind": "player" | "enemy" | "npc" | "pickup" | "projectile" | "boss",
       "color": string,                      // short color phrase, e.g. "muted purple-green"
-      "desc": string,                       // 1-line visual description, vivid and specific
-      "states": string[],                   // animation states present, e.g. ["idle","walk","attack","hurt"]
-      "speed": number,                      // pixels/sec, 0 for static
-      "hp": number                          // hit points, 1 for one-shot, 0 for invulnerable/static
+      "desc": string,                       // vivid 1-line visual description
+      "states": string[],                   // animation states; safe set: idle walk jump cast block victory
+      "speed": number,
+      "hp": number
     }
   ],
   "tilesetPalette": [
-    {
-      "id": string,                         // SCREAMING_SNAKE_CASE
-      "color": string,                      // hex like "#3a8a3a"
-      "passable": boolean                   // true = walkable, false = collision
-    }
+    { "id": string, "color": string, "passable": boolean }
   ],
   "levelHints": {
-    "size": [number, number],               // [tilesWide, tilesTall], each between 8 and 40
-    "count": number,                        // number of levels, 1-3 for v1
-    "themes": string[]                      // one theme per level, e.g. ["forest", "cave"]
+    "size": [number, number],               // [tilesWide, tilesTall], each between 16 and 40
+    "count": number,
+    "themes": string[]
   }
 }
 
-Constraints:
+## Constraints
 - Exactly ONE entity with kind=player.
-- Entities total: 4-9 (sprite sheet limit). Combine variants if needed.
-- Tileset palette: 3-6 entries. First entry should be the dominant passable floor.
-- All entity 'states' must include "idle". If kind is "player" or "enemy" or "boss", also include "walk".
-- winCondition and loseCondition must be testable from observing game state without human judgment.
-- For platformer genre: include gravity-friendly tiles (floor, wall) and a goal entity or goal tile.
-- For top-down: orthogonal layout, walls block movement.
-- Do not include music, audio, or anything not visual.
+- Entities total: 4-9.
+- Tileset palette: 3-6 entries.
+- All entity states must include "idle". player/enemy/boss must also include "walk".
+- Avoid states "hurt" and "attack" — GPT Image 2 content filter rejects them. Use walk/jump/cast/block instead.
+- winCondition and loseCondition reference window.__gameState fields.
+- Do not include music, audio, or dialogue.
+
+## Genre-specific rules
+
+### beat-em-up (Double Dragon / Final Fight style)
+- movement: "4-direction" (X = left/right, Y = depth into screen — pseudo-3D lane)
+- tilesetPalette: first tile GROUND passable=true (street floor), second WALL passable=false (barriers), optional SHADOW passable=true, PROP passable=false
+- levelHints.size: [40, 12] — wide horizontal strip, camera scrolls right only
+- SPACE=attack, Z=jump; winCondition: window.__gameState.enemiesDefeated >= N
+- DO NOT use physics gravity — floor band is clamped in code, not physics
+
+### action-platformer (Shovel Knight / Metroidvania style)
+- movement: "platformer"
+- SPACE=jump (coyote time), Z=attack
+- tilesetPalette: first tile SKY passable=true color="#FF00FF" (transparent, bg shows through), then BRICK/STONE passable=false, optional SPIKE passable=true (hazard), CHEST passable=true (pickup)
+- levelHints.size: [22, 32] — tall vertical world
+- winCondition: window.__gameState.orbsCollected >= N or reach exit tile
+- Physics gravity required (gravity.y = 520)
+
+### platformer
+- movement: "platformer"
+- SPACE=jump
+- tilesetPalette: SKY passable=true first, then FLOOR/WALL passable=false
+- levelHints.size: [20, 15]
+
+### top-down-adventure / dungeon-crawler
+- movement: "8-direction" or "4-direction"
+- Open rooms with wall obstacles; corridors ≥ 2 tiles wide
 
 Return ONLY the JSON, no prose, no fences.`;
 

@@ -1,5 +1,7 @@
 import { resolve, join, dirname } from 'node:path';
-import { writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, readFile, mkdir } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { spawn } from 'node:child_process';
 import { loadState, saveState } from '../lib/state.js';
 import { designGame } from '../agents/designer.js';
 import { architectLevels } from '../agents/architect.js';
@@ -7,6 +9,9 @@ import { writeGameCode } from '../agents/codesmith.js';
 import { generateSprites, generateSpritesProcedural, generateTileset } from '../lib/sprites.js';
 import { ensureValue, prompts as p } from '../lib/interactive.js';
 import { CliError, EX } from '../lib/errors.js';
+
+// Genres that benefit from a GPT Image 2 parallax background
+const BG_GENRES = new Set(['platformer', 'action-platformer', 'shoot-em-up', 'twin-stick-shooter', 'dungeon-crawler', 'beat-em-up']);
 
 export async function generateCommand(description, opts, ctx) {
   const log = ctx.log;
@@ -36,7 +41,7 @@ export async function generateCommand(description, opts, ctx) {
   await saveState(projectDir, state);
   log.emit('agent.architect.done', { levels: levels.length });
 
-  // 3. Sprites (deterministic)
+  // 3. Sprites — GPT Image 2 or procedural fallback
   log.emit('asset.sprites.start');
   const assetsDir = resolve(projectDir, 'public', 'assets');
   const dataDir = resolve(projectDir, 'public', 'data');
@@ -68,34 +73,49 @@ export async function generateCommand(description, opts, ctx) {
   const spritesMeta = spritesResult.sprites;
   log.emit('asset.sprites.done', { sheets: spritesMeta.length });
 
-  // 4. Tileset (procedural for v1)
+  // 4. Tileset (procedural, 32px)
   log.emit('asset.tiles.start');
   const tileset = await generateTileset({
     palette: gdd.tilesetPalette,
     outPath: join(assetsDir, 'tiles.png'),
-    tileSize: 16,
+    tileSize: 32,
   });
   log.emit('asset.tiles.done');
 
-  // 5. Manifest + level data
+  // 5. Background (GPT Image 2 via bg-artist skill)
+  let bgMeta = null;
+  const useBg = BG_GENRES.has(gdd.genre) && !opts.placeholderSprites && !opts.skipSprites;
+  if (useBg) {
+    log.emit('asset.bg.start');
+    try {
+      const bgScript = resolve(dirname(fileURLToPath(import.meta.url)), '../../skills/bg-artist/scripts/generate_bg.mjs');
+      await runBgScript(bgScript, projectDir, opts.quality ?? 'low');
+      // bg script writes to manifest.json — read back just the bg entry
+      const tmp = JSON.parse(await readFile(join(assetsDir, 'manifest.json'), 'utf8'));
+      bgMeta = tmp.bg ?? null;
+      log.emit('asset.bg.done', { theme: bgMeta?.theme });
+    } catch (err) {
+      log.warn(`bg-artist failed (running without background): ${err.message}`);
+    }
+  }
+
+  // 6. Manifest + level data
   const manifest = {
-    sprites: spritesMeta.map((s, i) => ({
-      ...s,
-      textureKey: `entities-${i + 1}`,
-    })),
+    sprites: spritesMeta.map((s, i) => ({ ...s, textureKey: `entities-${i + 1}` })),
     tiles: {
       relSheet: 'assets/tiles.png',
       tileSize: tileset.tileSize,
       ids: tileset.ids,
       passable: gdd.tilesetPalette.map((t) => !!t.passable),
     },
+    bg: bgMeta,
   };
   await writeFile(join(assetsDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
   await writeFile(join(dataDir, 'levels.json'), JSON.stringify(levels, null, 2));
-  state.assets = { sprites: manifest.sprites, tiles: manifest.tiles };
+  state.assets = { sprites: manifest.sprites, tiles: manifest.tiles, bg: bgMeta };
   await saveState(projectDir, state);
 
-  // 6. Code synthesis
+  // 7. Code synthesis
   log.emit('agent.codesmith.start');
   const { files } = await writeGameCode({ gdd, levels, manifest, log });
   for (const f of files) {
@@ -116,30 +136,35 @@ export async function generateCommand(description, opts, ctx) {
   }
 }
 
+function runBgScript(scriptPath, projectDir, quality) {
+  return new Promise((res, rej) => {
+    const proc = spawn('node', [scriptPath, projectDir, '--quality', quality], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    proc.stdout.on('data', (d) => process.stderr.write(d));
+    proc.stderr.on('data', (d) => process.stderr.write(d));
+    proc.on('error', rej);
+    proc.on('close', (code) => (code === 0 ? res() : rej(new Error(`bg-artist exit ${code}`))));
+  });
+}
+
 async function deriveSpriteMeta(gdd, assetsDir) {
-  // Match the chunking the sprite-sheet generator used.
   const ROWS_PER_SHEET = 9;
   const sheets = [];
   for (let i = 0; i < gdd.entities.length; i += ROWS_PER_SHEET) {
     const group = gdd.entities.slice(i, i + ROWS_PER_SHEET);
     const cols = mergedStates(group);
     const sheetName = gdd.entities.length <= ROWS_PER_SHEET ? 'entities.png' : `entities-${Math.floor(i / ROWS_PER_SHEET) + 1}.png`;
-    sheets.push({
-      relSheet: `assets/${sheetName}`,
-      rows: group.map((e) => e.id),
-      cols,
-      cell: 160, // matches sprite-sheet skill default; sheets are downscaled by Phaser via FIT
-      bg: 'magenta',
-    });
+    sheets.push({ relSheet: `assets/${sheetName}`, rows: group.map((e) => e.id), cols, cell: 160, bg: 'magenta' });
   }
   return sheets;
 }
 
 function mergedStates(entities) {
   const set = new Set();
-  for (const e of entities) for (const s of (e.states ?? ['idle', 'walk', 'attack', 'hurt'])) set.add(s);
-  if (set.size === 0) return ['idle', 'walk', 'attack', 'hurt'];
-  const order = ['idle', 'walk', 'attack', 'hurt', 'run', 'jump', 'cast', 'block', 'death', 'victory'];
+  for (const e of entities) for (const s of (e.states ?? ['idle', 'walk'])) set.add(s);
+  if (set.size === 0) return ['idle', 'walk'];
+  const order = ['idle', 'walk', 'jump', 'cast', 'block', 'victory', 'run', 'death'];
   const ordered = order.filter((s) => set.has(s));
   for (const s of [...set].sort()) if (!ordered.includes(s)) ordered.push(s);
   return ordered;

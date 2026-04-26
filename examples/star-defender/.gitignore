@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.gameforge/runs/
+qa/__actual__/
+qa/__diffs__/
+qa/qa-report.json

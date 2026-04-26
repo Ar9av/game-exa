@@ -1,0 +1,10 @@
+node_modules/
+.env
+.env.local
+.DS_Store
+examples/*/node_modules/
+examples/*/dist/
+examples/*/.gameforge/runs/
+examples/*/qa/__actual__/
+examples/*/qa/__diffs__/
+*.log

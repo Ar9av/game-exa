@@ -1,0 +1,489 @@
+{
+  "version": 1,
+  "name": "pixel-pete",
+  "prompt": "A jumpy hero collecting coins through floating platforms.",
+  "genre": "platformer",
+  "createdAt": "2026-04-26T08:57:31.877Z",
+  "gdd": {
+    "title": "Pixel Pete",
+    "genre": "platformer",
+    "tagline": "A jumpy hero collecting coins through floating platforms.",
+    "loop": "Run right, jump over gaps, dodge bats, collect 5 coins to win.",
+    "winCondition": "window.__gameState.coinsCollected >= 5",
+    "loseCondition": "window.__gameState.playerHp <= 0 || window.__gameState.playerY > 400",
+    "controls": {
+      "movement": "platformer",
+      "actions": [
+        {
+          "key": "SPACE",
+          "name": "jump",
+          "description": "Jump"
+        }
+      ]
+    },
+    "entities": [
+      {
+        "id": "PETE",
+        "kind": "player",
+        "color": "red",
+        "desc": "Red-hatted pixel runner",
+        "states": [
+          "idle",
+          "walk",
+          "jump",
+          "hurt"
+        ],
+        "speed": 120,
+        "hp": 3
+      },
+      {
+        "id": "BAT",
+        "kind": "enemy",
+        "color": "purple",
+        "desc": "A flying purple bat",
+        "states": [
+          "idle",
+          "walk",
+          "hurt"
+        ],
+        "speed": 50,
+        "hp": 1
+      },
+      {
+        "id": "COIN",
+        "kind": "pickup",
+        "color": "gold",
+        "desc": "A spinning gold coin",
+        "states": [
+          "idle"
+        ],
+        "speed": 0,
+        "hp": 0
+      }
+    ],
+    "tilesetPalette": [
+      {
+        "id": "SKY",
+        "color": "#7090d0",
+        "passable": true
+      },
+      {
+        "id": "GRASS_TOP",
+        "color": "#3a8a3a",
+        "passable": false
+      },
+      {
+        "id": "DIRT",
+        "color": "#7a5a30",
+        "passable": false
+      },
+      {
+        "id": "STONE",
+        "color": "#606060",
+        "passable": false
+      }
+    ],
+    "levelHints": {
+      "size": [
+        22,
+        12
+      ],
+      "count": 1,
+      "themes": [
+        "outdoor"
+      ]
+    }
+  },
+  "levels": [
+    {
+      "id": "1-1",
+      "theme": "outdoor",
+      "size": [
+        22,
+        12
+      ],
+      "tiles": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          2,
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "spawns": [
+        {
+          "entity": "PETE",
+          "x": 1,
+          "y": 9
+        },
+        {
+          "entity": "BAT",
+          "x": 9,
+          "y": 4
+        },
+        {
+          "entity": "BAT",
+          "x": 17,
+          "y": 7
+        },
+        {
+          "entity": "COIN",
+          "x": 7,
+          "y": 3
+        },
+        {
+          "entity": "COIN",
+          "x": 14,
+          "y": 4
+        },
+        {
+          "entity": "COIN",
+          "x": 4,
+          "y": 6
+        },
+        {
+          "entity": "COIN",
+          "x": 11,
+          "y": 7
+        },
+        {
+          "entity": "COIN",
+          "x": 19,
+          "y": 9
+        }
+      ],
+      "goal": {
+        "kind": "tile"
+      }
+    }
+  ],
+  "assets": {
+    "sprites": [
+      {
+        "sheet": "/tmp/gameforge-test/pixel-pete/public/assets/entities.png",
+        "relSheet": "assets/entities.png",
+        "rows": [
+          "PETE",
+          "BAT",
+          "COIN"
+        ],
+        "cols": [
+          "idle",
+          "walk",
+          "hurt",
+          "jump"
+        ],
+        "cell": 32,
+        "bg": "transparent",
+        "textureKey": "entities-1"
+      }
+    ],
+    "tiles": {
+      "relSheet": "assets/tiles.png",
+      "tileSize": 16,
+      "ids": [
+        "SKY",
+        "GRASS_TOP",
+        "DIRT",
+        "STONE"
+      ],
+      "passable": [
+        true,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "code": {
+    "entryPoint": "src/main.js",
+    "scenes": [
+      "Boot",
+      "Preload",
+      "Game"
+    ]
+  },
+  "qa": []
+}

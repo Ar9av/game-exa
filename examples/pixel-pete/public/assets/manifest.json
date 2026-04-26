@@ -1,0 +1,38 @@
+{
+  "sprites": [
+    {
+      "sheet": "/tmp/gameforge-test/pixel-pete/public/assets/entities.png",
+      "relSheet": "assets/entities.png",
+      "rows": [
+        "PETE",
+        "BAT",
+        "COIN"
+      ],
+      "cols": [
+        "idle",
+        "walk",
+        "hurt",
+        "jump"
+      ],
+      "cell": 32,
+      "bg": "transparent",
+      "textureKey": "entities-1"
+    }
+  ],
+  "tiles": {
+    "relSheet": "assets/tiles.png",
+    "tileSize": 16,
+    "ids": [
+      "SKY",
+      "GRASS_TOP",
+      "DIRT",
+      "STONE"
+    ],
+    "passable": [
+      true,
+      false,
+      false,
+      false
+    ]
+  }
+}

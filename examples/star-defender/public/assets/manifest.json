@@ -1,0 +1,35 @@
+{
+  "sprites": [
+    {
+      "sheet": "/tmp/gameforge-test/star-defender/public/assets/entities.png",
+      "relSheet": "assets/entities.png",
+      "rows": [
+        "SHIP",
+        "ASTEROID",
+        "BULLET"
+      ],
+      "cols": [
+        "idle",
+        "walk",
+        "hurt"
+      ],
+      "cell": 32,
+      "bg": "transparent",
+      "textureKey": "entities-1"
+    }
+  ],
+  "tiles": {
+    "relSheet": "assets/tiles.png",
+    "tileSize": 16,
+    "ids": [
+      "SPACE",
+      "STAR",
+      "NEBULA"
+    ],
+    "passable": [
+      true,
+      true,
+      true
+    ]
+  }
+}

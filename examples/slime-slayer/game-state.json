@@ -1,0 +1,412 @@
+{
+  "version": 1,
+  "name": "slime-slayer",
+  "prompt": "A pixel knight collects gems while dodging slimes.",
+  "genre": "top-down-adventure",
+  "createdAt": "2026-04-26T08:57:24.128Z",
+  "gdd": {
+    "title": "Slime Slayer",
+    "genre": "top-down-adventure",
+    "tagline": "A pixel knight collects gems while dodging slimes.",
+    "loop": "Walk, swing sword to defeat slimes, collect gems, reach gem count to win.",
+    "winCondition": "window.__gameState.gemsCollected >= 3",
+    "loseCondition": "window.__gameState.playerHp <= 0",
+    "controls": {
+      "movement": "4-direction",
+      "actions": [
+        {
+          "key": "SPACE",
+          "name": "attack",
+          "description": "Swing sword"
+        }
+      ]
+    },
+    "entities": [
+      {
+        "id": "KNIGHT",
+        "kind": "player",
+        "color": "blue",
+        "desc": "A small blue knight with a silver sword",
+        "states": [
+          "idle",
+          "walk",
+          "attack",
+          "hurt"
+        ],
+        "speed": 80,
+        "hp": 3
+      },
+      {
+        "id": "SLIME",
+        "kind": "enemy",
+        "color": "green",
+        "desc": "A round green slime with a wobble",
+        "states": [
+          "idle",
+          "walk",
+          "hurt"
+        ],
+        "speed": 30,
+        "hp": 1
+      },
+      {
+        "id": "GEM",
+        "kind": "pickup",
+        "color": "yellow",
+        "desc": "A bright yellow gem with sparkles",
+        "states": [
+          "idle"
+        ],
+        "speed": 0,
+        "hp": 0
+      }
+    ],
+    "tilesetPalette": [
+      {
+        "id": "GRASS",
+        "color": "#3a8a3a",
+        "passable": true
+      },
+      {
+        "id": "DIRT",
+        "color": "#7a5a30",
+        "passable": true
+      },
+      {
+        "id": "STONE",
+        "color": "#606060",
+        "passable": false
+      },
+      {
+        "id": "TREE",
+        "color": "#1a5a1a",
+        "passable": false
+      }
+    ],
+    "levelHints": {
+      "size": [
+        16,
+        12
+      ],
+      "count": 1,
+      "themes": [
+        "forest"
+      ]
+    }
+  },
+  "levels": [
+    {
+      "id": "1-1",
+      "theme": "forest",
+      "size": [
+        16,
+        12
+      ],
+      "tiles": [
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2
+        ],
+        [
+          2,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          1,
+          1,
+          0,
+          2
+        ],
+        [
+          2,
+          0,
+          1,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          2
+        ],
+        [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2
+        ],
+        [
+          2,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          2
+        ],
+        [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2
+        ],
+        [
+          2,
+          0,
+          1,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          2
+        ],
+        [
+          2,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          1,
+          0,
+          2
+        ],
+        [
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2
+        ],
+        [
+          2,
+          0,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2
+        ],
+        [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ]
+      ],
+      "spawns": [
+        {
+          "entity": "KNIGHT",
+          "x": 2,
+          "y": 2
+        },
+        {
+          "entity": "SLIME",
+          "x": 8,
+          "y": 4
+        },
+        {
+          "entity": "SLIME",
+          "x": 4,
+          "y": 7
+        },
+        {
+          "entity": "SLIME",
+          "x": 12,
+          "y": 9
+        },
+        {
+          "entity": "GEM",
+          "x": 13,
+          "y": 2
+        },
+        {
+          "entity": "GEM",
+          "x": 7,
+          "y": 6
+        },
+        {
+          "entity": "GEM",
+          "x": 2,
+          "y": 10
+        }
+      ],
+      "goal": {
+        "kind": "tile"
+      }
+    }
+  ],
+  "assets": {
+    "sprites": [
+      {
+        "sheet": "/tmp/gameforge-test/slime-slayer/public/assets/entities.png",
+        "relSheet": "assets/entities.png",
+        "rows": [
+          "KNIGHT",
+          "SLIME",
+          "GEM"
+        ],
+        "cols": [
+          "idle",
+          "walk",
+          "attack",
+          "hurt"
+        ],
+        "cell": 32,
+        "bg": "transparent",
+        "textureKey": "entities-1"
+      }
+    ],
+    "tiles": {
+      "relSheet": "assets/tiles.png",
+      "tileSize": 16,
+      "ids": [
+        "GRASS",
+        "DIRT",
+        "STONE",
+        "TREE"
+      ],
+      "passable": [
+        true,
+        true,
+        false,
+        false
+      ]
+    }
+  },
+  "code": {
+    "entryPoint": "src/main.js",
+    "scenes": [
+      "Boot",
+      "Preload",
+      "Game"
+    ]
+  },
+  "qa": []
+}

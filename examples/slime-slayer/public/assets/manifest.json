@@ -1,0 +1,38 @@
+{
+  "sprites": [
+    {
+      "sheet": "/tmp/gameforge-test/slime-slayer/public/assets/entities.png",
+      "relSheet": "assets/entities.png",
+      "rows": [
+        "KNIGHT",
+        "SLIME",
+        "GEM"
+      ],
+      "cols": [
+        "idle",
+        "walk",
+        "attack",
+        "hurt"
+      ],
+      "cell": 32,
+      "bg": "transparent",
+      "textureKey": "entities-1"
+    }
+  ],
+  "tiles": {
+    "relSheet": "assets/tiles.png",
+    "tileSize": 16,
+    "ids": [
+      "GRASS",
+      "DIRT",
+      "STONE",
+      "TREE"
+    ],
+    "passable": [
+      true,
+      true,
+      false,
+      false
+    ]
+  }
+}

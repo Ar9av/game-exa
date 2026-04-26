@@ -21,7 +21,7 @@ Output ONLY a single JSON object matching this schema. No prose, no fences, no c
 ```jsonc
 {
   "title": "<short game title (1-4 words)>",
-  "genre": "top-down-adventure" | "platformer" | "twin-stick-shooter" | "puzzle" | "shoot-em-up" | "dungeon-crawler" | "top-down-rpg",
+  "genre": "top-down-adventure" | "platformer" | "action-platformer" | "twin-stick-shooter" | "puzzle" | "shoot-em-up" | "dungeon-crawler" | "top-down-rpg" | "beat-em-up",
   "tagline": "<one-sentence pitch>",
   "loop":   "<1-3 sentences describing the core gameplay loop>",
   "winCondition":  "<concrete, observable in headless test, e.g. 'window.__gameState.gemsCollected >= 3'>",
@@ -60,9 +60,30 @@ Output ONLY a single JSON object matching this schema. No prose, no fences, no c
 - Every entity's `states` MUST include `"idle"`. For `kind ∈ {player, enemy, boss}`, also include `"walk"`.
 - Prefer states from this filter-safe set: `idle`, `walk`, `jump`, `cast`, `block`, `victory`. Avoid `hurt` and `attack` as dedicated sprite states — GPT Image 2's content filter trips on the typical "pained grimace / lunging / weapon extended" descriptions. For damage feedback, the codesmith uses tint flash + alpha blink + camera shake (no sprite frame needed). For attack feedback, a brief swing animation can be implemented in code.
 - `winCondition` and `loseCondition` must be testable from `window.__gameState` without human judgment.
-- For **platformer**: include gravity-friendly tiles (floor, wall) and a goal entity OR goal tile.
+- For **platformer** / **action-platformer**: include gravity-friendly tiles (floor, wall) and a goal entity OR goal tile.
+- For **beat-em-up**: floor is always passable, walls are impassable on the sides only. No ceiling. Include `ENEMY` entity (kind=enemy) that walks toward player. Win = defeat N enemies.
 - For **top-down**: orthogonal layout, walls block movement.
 - Do not include music, audio, voice, or dialogue.
+
+## Genre-specific guidance
+
+### beat-em-up
+Classic side-scrolling brawler (Double Dragon / Final Fight style). Characters move in both X and Y within a 2D "lane" depth illusion. Y-position determines render depth and ground-truth position on the pseudo-3D floor.
+- Controls: 4-direction movement (X+Y pseudo-3D), attack on SPACE/Z
+- Tiles: GROUND (passable), WALL (impassable left/right border), optional PROP tiles (bench, barrel)
+- Camera follows player rightward only (one-way scroll)
+- HUD: health bar drawn as graphics, score, lives/wave count
+- winCondition: defeat a fixed number of enemies (e.g. `window.__gameState.enemiesDefeated >= 10`)
+- Use the `beat-em-up` skill for codesmith patterns
+
+### action-platformer
+Gravity-driven side-scroller with jump, hazards, and atmospheric depth (Shovel Knight / Metroidvania style).
+- Controls: left/right + jump (SPACE), optional attack (Z)
+- Tiles: STONE/BRICK (impassable floor/wall), SKY (passable, transparent — bg shows through), optional HAZARD tile (spikes)
+- Camera follows player in both axes; world taller than viewport
+- HUD: HP bar, score, level name
+- Use `bg-artist` for cave/dungeon parallax background
+- winCondition: reach goal tile OR collect all keys
 
 ## Process
 

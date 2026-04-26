@@ -134,6 +134,8 @@ node skills/gap-checker/scripts/dynamic_check.mjs examples/my-game --port 5199 -
 | `gap-checker` | Playability validation: static BFS + dynamic fuzzer + VLM review | — | `static_check.mjs`, `dynamic_check.mjs` |
 | `level-fixer` | Gap-checker issues → patched `levels.json` | — | — |
 | `rpg-overworld` | RPG-specific patterns: NPC dialogue, y-sort, quest pickups, camera follow | — | `references/rpg-recipes.md` |
+| `beat-em-up` | Beat-em-up patterns: pseudo-3D movement, y-sort, attack hitbox, enemy AI, HP bar HUD | — | — |
+| `action-platformer` | Action-platformer patterns: gravity, coyote-time, spikes, attack, HP gems, dungeon bg | — | — |
 
 ## Validated genres
 
@@ -144,6 +146,8 @@ node skills/gap-checker/scripts/dynamic_check.mjs examples/my-game --port 5199 -
 | Arena shooter | void-breaker | Spawn waves, enemy AI, particle explosions, multiplier combo, bombs |
 | Top-down adventure | slime-slayer | 4-direction, attack hitbox, pickups, HP, BFS reachability |
 | Shoot-em-up | star-defender | Projectiles, timed enemy spawn, kill-count win condition |
+| Beat-em-up | *(see skills/beat-em-up)* | Pseudo-3D Y-depth, 4-dir brawler, y-sort, one-way camera scroll, HP bar HUD, enemy wave spawner |
+| Action-platformer | *(see skills/action-platformer)* | Gravity+coyote-time jump, spike hazard tiles, sword attack, HP gem HUD, dungeon parallax bg |
 
 ## Project layout (this repo)
 
@@ -172,7 +176,9 @@ gamewright/
 │   ├── refiner/
 │   ├── gap-checker/
 │   ├── level-fixer/
-│   └── rpg-overworld/      # RPG overworld patterns + recipes
+│   ├── rpg-overworld/      # RPG overworld patterns + recipes
+│   ├── beat-em-up/         # Double Dragon / Final Fight brawler patterns
+│   └── action-platformer/  # Shovel Knight / Metroidvania patterns
 ├── templates/phaser-game/  # per-game Phaser 3 + Vite starter
 ├── examples/               # generated sample games
 │   ├── crystal-village/    # RPG overworld with NPC dialogue

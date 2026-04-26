@@ -10,7 +10,8 @@ Generates a single PNG that the Phaser runtime renders behind the tilemap with a
 ## When to use
 
 After `game-designer` produces a GDD. Whenever the genre + theme benefit from a backdrop:
-- platformer / dungeon-crawler / shoot-em-up: yes (sky, cave, space)
+- platformer / action-platformer / dungeon-crawler / shoot-em-up: yes (sky, cave, space)
+- beat-em-up: yes — layered street/park/forest background is essential for visual quality
 - top-down-adventure: usually no (the tilemap fills the view)
 - puzzle / abstract: optional
 
@@ -36,10 +37,14 @@ The Phaser template's `Preload` scene loads `bg` automatically when this manifes
 
 | Genre | Theme | Prompt skeleton |
 |---|---|---|
-| platformer | outdoor-day | Soft pastel sky, fluffy clouds, distant green hills in silhouette layered for depth |
-| platformer | outdoor-night | Deep blue night sky, large moon, mountains silhouetted, subtle stars |
-| dungeon-crawler | cave | Damp stone cave wall texture, faint torch glow, distant cracks suggesting depth |
-| shoot-em-up | space | Deep dark blue-black space, scattered stars at varied brightness, 1-2 distant nebula clouds |
+| platformer / action-platformer | outdoor-day | Soft pastel sky, fluffy clouds, distant green rolling hills silhouetted in 3 depth layers |
+| platformer / action-platformer | outdoor-night | Deep blue night sky, large full moon, mountain range silhouetted in 2 layers, scattered stars |
+| action-platformer | dungeon | Dark damp stone dungeon interior, crumbling brick walls receding into shadows, faint torch glow on side walls, no characters |
+| dungeon-crawler | cave | Rough cave walls with stalactites, faint bioluminescent moss patches, distant dark tunnel, atmospheric blue-green tint |
+| shoot-em-up | space | Deep blue-black space, star field with 3 brightness levels, 1-2 colourful distant nebulae, no planets in foreground |
+| beat-em-up | forest-park | 3 depth layers: far = muted blue-grey sky + canopy silhouettes; mid = orange-brown tree trunks + fence; near = dirt ground strip. NES Double Dragon color palette. No characters or UI. |
+| beat-em-up | city-street | Far = dark grey building facades with lit windows; mid = parked cars / dumpsters silhouetted; near = sidewalk strip. Urban night palette. |
+| beat-em-up | warehouse | Industrial brick walls with high windows; dim overhead light pools; stacked crates silhouetted in mid distance. |
 | top-down-adventure | (none — uses tilemap fill) | n/a |
 
 ## Process

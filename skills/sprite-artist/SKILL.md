@@ -65,13 +65,49 @@ The complete manifest:
 - Image dimensions must satisfy: multiples of 16; ratio ≤ 3:1; total px ∈ [655360, 8294400]. Auto-pick `cellPx` to satisfy.
 - After generation, post-process: every pixel where `R>200 && G<80 && B>200` → `alpha=0`. Done with `sharp`.
 
+## Visual quality target
+
+The procedural generator targets **NES / early GBA pixel art quality** — the visual bar set by Double Dragon, Shovel Knight, and Link's Awakening:
+- **Characters**: ellipse-based heads, distinct clothing layers (tunic, belt, boots), visible arms with hands, walk cycle with ±2 px leg offset between frames.
+- **Outlines**: 1-pixel dark border around entire sprite silhouette using the two-pass rule below.
+- **Cell size**: 48 px (gives enough pixels for readable faces, clothing detail, accessories).
+- **Palette discipline**: 4-8 colors per character — highlight, midtone, shadow, outline + 1-2 accent colors.
+- **Transparent backgrounds**: sprite buffers init to `alpha=0`; only drawn pixels get `alpha=255`. The two-pass outline rule below keeps backgrounds clean.
+
+## Two-pass outline rule (CRITICAL)
+
+**Never** draw outline pixels in-place during the same buffer scan that reads opaque pixels — each newly-opaque outline pixel triggers another outline pixel on the next iteration, cascading a dark flood-fill across the entire right/bottom of the cell.
+
+```js
+// CORRECT — collect first, draw second:
+function addOutline(buf, W, x0, y0, sz, oR, oG, oB) {
+  const toFill = [];
+  for (let y = y0; y < y0 + sz; y++)
+    for (let x = x0; x < x0 + sz; x++) {
+      if (buf[(y * W + x) * 4 + 3] < 200) continue;
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < x0 || nx >= x0 + sz || ny < y0 || ny >= y0 + sz) continue; // clamp to cell
+        if (buf[(ny * W + nx) * 4 + 3] < 200) toFill.push(nx, ny);
+      }
+    }
+  for (let i = 0; i < toFill.length; i += 2)
+    pix(buf, W, toFill[i], toFill[i + 1], oR, oG, oB);
+}
+```
+
+Call `addOutline()` once per cell, **after** all other pixels are drawn.
+
 ## Procedural mode details
 
-- Cell size: 32px (small, fast, Phaser scales via FIT).
+- Cell size: **48 px** (Phaser scales to display size via `setDisplaySize` — cell size doesn't change hitboxes).
 - Per (entity, state):
   - Body color from entity's `color` (named-color phrase → hex via lookup, falls back to gray).
-  - State silhouette: idle = centered; walk = offset; attack = wider; hurt = squashed darker; jump = lifted; death = collapsed.
-  - Eyes for player/enemy/boss/npc kinds. Outline border in darker shade.
+  - Humanoid characters: ellipse head, rectangular torso, arm + leg pairs. Idle = symmetric. Walk = ±2 px leg X offset between the two walk frames.
+  - Non-humanoid enemies: shape appropriate to description (blob, quadruped, flying creature).
+  - Eyes for player/enemy/boss/npc kinds.
+  - Call `addOutline()` once per cell, after all pixels are drawn, using the two-pass approach above.
+  - Outline color: darkest shade of character's primary color (not pure black — e.g. dark brown for a tan character).
 
 ## Scripts
 

@@ -3,7 +3,7 @@
   "name": "dungeon-knight",
   "prompt": "A cursed knight scales a spike-filled dungeon collecting orbs to unlock the exit portal",
   "genre": "action-platformer",
-  "createdAt": "2026-04-26T16:27:02.514Z",
+  "createdAt": "2026-04-26T18:34:29.925Z",
   "gdd": {
     "title": "Dungeon Knight",
     "genre": "action-platformer",
@@ -112,22 +112,26 @@
       {
         "id": "STONE",
         "color": "#607070",
-        "passable": false
+        "passable": false,
+        "desc": "gray cobblestone dungeon floor tile, beveled stone blocks with deep mortar cracks, dark damp medieval dungeon atmosphere, worn stone surface"
       },
       {
         "id": "BRICK",
         "color": "#8B5A3C",
-        "passable": false
+        "passable": false,
+        "desc": "dark reddish-brown dungeon wall brick tile, rectangular masonry bricks with thick mortar gaps, rough-hewn castle stone wall texture"
       },
       {
         "id": "SPIKE",
         "color": "#C04020",
-        "passable": true
+        "passable": true,
+        "desc": "deadly metal spike hazard tile, three sharp metallic spikes pointing upward from a dark iron base plate, danger trap marker, blood-stained tips"
       },
       {
         "id": "LADDER",
         "color": "#A07840",
-        "passable": true
+        "passable": true,
+        "desc": "old wooden ladder tile, brown wooden rungs on vertical side rails, dungeon prop, worn and splintered wood"
       }
     ],
     "levelHints": {

@@ -3,7 +3,7 @@
   "name": "sewer-bot",
   "prompt": "A scrappy maintenance robot navigates toxic sewers recharging on power cells while fighting mechanical vermin",
   "genre": "action-platformer",
-  "createdAt": "2026-04-26T17:45:16.480Z",
+  "createdAt": "2026-04-26T18:34:35.676Z",
   "gdd": {
     "title": "Sewer Bot",
     "genre": "action-platformer",
@@ -123,22 +123,26 @@
       {
         "id": "PIPE",
         "color": "#00CCCC",
-        "passable": false
+        "passable": false,
+        "desc": "industrial sewer pipe platform tile, thick cyan-colored metal pipe cross-section viewed from the side, circular pipe with visible rivets, rust stains and verdigris patina, sci-fi maintenance robot aesthetic"
       },
       {
         "id": "FLOOR",
         "color": "#2A2A3A",
-        "passable": false
+        "passable": false,
+        "desc": "dark grimy concrete sewer tunnel floor tile, rough worn surface with grime buildup, moisture stains, hairline cracks and algae growth"
       },
       {
         "id": "ACID",
         "color": "#22FF44",
-        "passable": true
+        "passable": true,
+        "desc": "toxic green acid pool hazard tile, bubbling luminescent green chemical liquid with phosphorescent glow and rising vapor wisps, danger hazard"
       },
       {
         "id": "LADDER",
         "color": "#885522",
-        "passable": true
+        "passable": true,
+        "desc": "rusty iron maintenance ladder tile, corroded brown-orange metal rungs with visible bolt holes and paint flaking, industrial sewer maintenance access"
       }
     ],
     "levelHints": {

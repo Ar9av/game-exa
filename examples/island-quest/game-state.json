@@ -3,7 +3,7 @@
   "name": "island-quest",
   "prompt": "A young hero explores a magical island collecting five heart crystals to restore the sacred shrine",
   "genre": "top-down-adventure",
-  "createdAt": "2026-04-26T16:29:18.930Z",
+  "createdAt": "2026-04-26T18:34:32.093Z",
   "gdd": {
     "title": "Island Quest",
     "genre": "top-down-adventure",
@@ -99,27 +99,32 @@
       {
         "id": "GRASS",
         "color": "#40A028",
-        "passable": true
+        "passable": true,
+        "desc": "bright green lush island grass ground tile, vivid tropical vegetation texture with tiny grass blade details and patches of dark soil, top-down view"
       },
       {
         "id": "WATER",
         "color": "#1E5EA0",
-        "passable": false
+        "passable": false,
+        "desc": "deep blue tropical ocean water tile, rippling wave pattern with light blue highlights and subtle white foam edges, top-down island adventure view"
       },
       {
         "id": "WALL",
         "color": "#787878",
-        "passable": false
+        "passable": false,
+        "desc": "gray ancient stone wall tile, weathered temple stone blocks with moss and lichen stains, archaeological island ruin texture, top-down view"
       },
       {
         "id": "FLOWER",
         "color": "#E060B0",
-        "passable": true
+        "passable": true,
+        "desc": "pink wildflower decoration tile, small colorful tropical blossoms with green stems on bright soil, island flora decoration, top-down view"
       },
       {
         "id": "TREE",
         "color": "#1E4010",
-        "passable": false
+        "passable": false,
+        "desc": "dark dense forest tree canopy tile, thick tropical dark green leaves with visible branch network, top-down aerial view of tree crown"
       }
     ],
     "levelHints": {

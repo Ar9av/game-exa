@@ -3,7 +3,7 @@
   "name": "dragon-brawl",
   "prompt": "A street fighter battles through waves of gang members in gritty urban alleys",
   "genre": "beat-em-up",
-  "createdAt": "2026-04-26T16:28:07.184Z",
+  "createdAt": "2026-04-26T18:34:38.538Z",
   "gdd": {
     "title": "Dragon Brawl",
     "genre": "beat-em-up",
@@ -95,17 +95,20 @@
       {
         "id": "GROUND",
         "color": "#4A3728",
-        "passable": true
+        "passable": true,
+        "desc": "dark brown cracked asphalt urban street ground tile, scuffed city pavement with grime stains and cigarette marks, 1980s city nighttime brawler aesthetic"
       },
       {
         "id": "WALL",
         "color": "#252525",
-        "passable": false
+        "passable": false,
+        "desc": "dark charcoal-gray concrete urban wall tile, rough city building wall with graffiti tags and weathered paint, beat-em-up urban setting"
       },
       {
         "id": "PROP",
         "color": "#604830",
-        "passable": false
+        "passable": false,
+        "desc": "old wooden crate or barrel prop tile, dark aged wood planks with metal corner brackets and rusty nails, city alley prop"
       }
     ],
     "levelHints": {

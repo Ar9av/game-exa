@@ -10,7 +10,7 @@ import { resolve, join, dirname } from 'node:path';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { generateSprites, generateTileset } from '../src/lib/sprites.js';
+import { generateSprites, generateTilesetGPT } from '../src/lib/sprites.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -55,11 +55,11 @@ const DUNGEON_KNIGHT_GDD = {
     { id: 'DARK_KNIGHT', kind: 'boss', color: 'dark crimson black', desc: 'Massive dark knight in obsidian plate with glowing red eyes wielding a giant war hammer', states: ['idle', 'walk', 'cast'], speed: 50, hp: 10 },
   ],
   tilesetPalette: [
-    { id: 'SKY', color: '#FF00FF', passable: true },
-    { id: 'STONE', color: '#607070', passable: false },
-    { id: 'BRICK', color: '#8B5A3C', passable: false },
-    { id: 'SPIKE', color: '#C04020', passable: true },
-    { id: 'LADDER', color: '#A07840', passable: true },
+    { id: 'SKY',    color: '#FF00FF', passable: true  },
+    { id: 'STONE',  color: '#607070', passable: false, desc: 'gray cobblestone dungeon floor tile, beveled stone blocks with deep mortar cracks, dark damp medieval dungeon atmosphere, worn stone surface' },
+    { id: 'BRICK',  color: '#8B5A3C', passable: false, desc: 'dark reddish-brown dungeon wall brick tile, rectangular masonry bricks with thick mortar gaps, rough-hewn castle stone wall texture' },
+    { id: 'SPIKE',  color: '#C04020', passable: true,  desc: 'deadly metal spike hazard tile, three sharp metallic spikes pointing upward from a dark iron base plate, danger trap marker, blood-stained tips' },
+    { id: 'LADDER', color: '#A07840', passable: true,  desc: 'old wooden ladder tile, brown wooden rungs on vertical side rails, dungeon prop, worn and splintered wood' },
   ],
   levelHints: { size: [22, 32], count: 1, themes: ['cursed dungeon'] },
 };
@@ -135,9 +135,9 @@ const DRAGON_BRAWL_GDD = {
     { id: 'BOSS_DRAGON', kind: 'boss', color: 'gold armored dark', desc: 'Massive dragon-tattooed crime boss in gold-accented dark armor with glowing fists', states: ['idle', 'walk', 'cast'], speed: 40, hp: 15 },
   ],
   tilesetPalette: [
-    { id: 'GROUND', color: '#4A3728', passable: true },
-    { id: 'WALL', color: '#252525', passable: false },
-    { id: 'PROP', color: '#604830', passable: false },
+    { id: 'GROUND', color: '#4A3728', passable: true,  desc: 'dark brown cracked asphalt urban street ground tile, scuffed city pavement with grime stains and cigarette marks, 1980s city nighttime brawler aesthetic' },
+    { id: 'WALL',   color: '#252525', passable: false, desc: 'dark charcoal-gray concrete urban wall tile, rough city building wall with graffiti tags and weathered paint, beat-em-up urban setting' },
+    { id: 'PROP',   color: '#604830', passable: false, desc: 'old wooden crate or barrel prop tile, dark aged wood planks with metal corner brackets and rusty nails, city alley prop' },
   ],
   levelHints: { size: [40, 12], count: 1, themes: ['dark urban street'] },
 };
@@ -201,11 +201,11 @@ const ISLAND_QUEST_GDD = {
     { id: 'HEART', kind: 'pickup', color: 'bright red crystal', desc: 'Glowing bright red heart-shaped crystal radiating warm light', states: ['idle'], speed: 0, hp: 0 },
   ],
   tilesetPalette: [
-    { id: 'GRASS', color: '#40A028', passable: true },
-    { id: 'WATER', color: '#1E5EA0', passable: false },
-    { id: 'WALL', color: '#787878', passable: false },
-    { id: 'FLOWER', color: '#E060B0', passable: true },
-    { id: 'TREE', color: '#1E4010', passable: false },
+    { id: 'GRASS',  color: '#40A028', passable: true,  desc: 'bright green lush island grass ground tile, vivid tropical vegetation texture with tiny grass blade details and patches of dark soil, top-down view' },
+    { id: 'WATER',  color: '#1E5EA0', passable: false, desc: 'deep blue tropical ocean water tile, rippling wave pattern with light blue highlights and subtle white foam edges, top-down island adventure view' },
+    { id: 'WALL',   color: '#787878', passable: false, desc: 'gray ancient stone wall tile, weathered temple stone blocks with moss and lichen stains, archaeological island ruin texture, top-down view' },
+    { id: 'FLOWER', color: '#E060B0', passable: true,  desc: 'pink wildflower decoration tile, small colorful tropical blossoms with green stems on bright soil, island flora decoration, top-down view' },
+    { id: 'TREE',   color: '#1E4010', passable: false, desc: 'dark dense forest tree canopy tile, thick tropical dark green leaves with visible branch network, top-down aerial view of tree crown' },
   ],
   levelHints: { size: [20, 15], count: 1, themes: ['magical island'] },
 };
@@ -323,10 +323,10 @@ const SEWER_BOT_GDD = {
   ],
   tilesetPalette: [
     { id: 'SKY',    color: '#FF00FF', passable: true  },
-    { id: 'PIPE',   color: '#00CCCC', passable: false },
-    { id: 'FLOOR',  color: '#2A2A3A', passable: false },
-    { id: 'ACID',   color: '#22FF44', passable: true  },
-    { id: 'LADDER', color: '#885522', passable: true  },
+    { id: 'PIPE',   color: '#00CCCC', passable: false, desc: 'industrial sewer pipe platform tile, thick cyan-colored metal pipe cross-section viewed from the side, circular pipe with visible rivets, rust stains and verdigris patina, sci-fi maintenance robot aesthetic' },
+    { id: 'FLOOR',  color: '#2A2A3A', passable: false, desc: 'dark grimy concrete sewer tunnel floor tile, rough worn surface with grime buildup, moisture stains, hairline cracks and algae growth' },
+    { id: 'ACID',   color: '#22FF44', passable: true,  desc: 'toxic green acid pool hazard tile, bubbling luminescent green chemical liquid with phosphorescent glow and rising vapor wisps, danger hazard' },
+    { id: 'LADDER', color: '#885522', passable: true,  desc: 'rusty iron maintenance ladder tile, corroded brown-orange metal rungs with visible bolt holes and paint flaking, industrial sewer maintenance access' },
   ],
   levelHints: { size: [22, 32], count: 1, themes: ['toxic sewer depths'] },
 };
@@ -499,12 +499,16 @@ async function main() {
   });
   const spritesMeta = spritesResult.sprites;
 
-  // 3 ── Tileset (procedural)
-  console.log(`[${gameName}] → tileset (procedural)...`);
-  const tileset = await generateTileset({
+  // 3 ── Tileset (GPT Image 2, one call per tile type)
+  console.log(`[${gameName}] → tileset (GPT Image 2)...`);
+  const tileset = await generateTilesetGPT({
     palette: gdd.tilesetPalette,
     outPath: join(assetsDir, 'tiles.png'),
     tileSize: 32,
+    genre: gdd.genre,
+    tagline: gdd.tagline,
+    quality: 'low',
+    log: (msg) => console.log(msg),
   });
 
   // 4 ── Background (GPT Image 2 via bg-artist)

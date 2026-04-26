@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { homedir } from 'node:os';
 import { existsSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import sharp from 'sharp';
 
@@ -297,4 +297,122 @@ function drawCell(buf, stride, x0, y0, size, color, state, kind) {
       buf[idx + 0] = Math.round(r * 0.4); buf[idx + 1] = Math.round(g * 0.4); buf[idx + 2] = Math.round(b * 0.4); buf[idx + 3] = 255;
     }
   }
+}
+
+// ── GPT Image 2 tile generation ───────────────────────────────────────────────
+
+const TILE_DESC_MAP = {
+  STONE:  'gray cobblestone dungeon floor, beveled stone blocks with mortar cracks, dark medieval dungeon atmosphere',
+  BRICK:  'dark reddish-brown dungeon wall brick, rectangular masonry bricks with mortar gaps, rough castle stone',
+  SPIKE:  'metal spike hazard, three sharp metallic spikes pointing upward from a dark iron base plate, danger marker',
+  LADDER: 'wooden ladder, brown wooden rungs and vertical side rails, dungeon climbing prop',
+  PIPE:   'cyan-colored metal sewer pipe cross-section viewed from the side, cylindrical pipe with rivets and rust stains',
+  FLOOR:  'dark grimy concrete sewer tunnel floor, rough worn surface with grime buildup and moisture stains',
+  ACID:   'toxic acid pool, bubbling luminescent green liquid with phosphorescent glow at edges, hazard puddle',
+  GROUND: 'dirty urban street asphalt, cracked pavement with grime and scuff marks, beat-em-up city floor',
+  WALL:   'dark rough concrete wall, charcoal-gray urban surface with subtle wear and weathering texture',
+  PROP:   'old wooden crate, dark aged wood planks with metal corner brackets, beat-em-up stage prop',
+  GRASS:  'bright green tropical island grass ground, lush vegetation texture with tiny blade details and soil patches',
+  WATER:  'deep blue tropical ocean water, rippling wave pattern with light highlights and subtle white foam edges',
+  FLOWER: 'small pink tropical flowers, colorful blossoms with green stems on sandy soil background, island decoration',
+  TREE:   'dark dense forest tree canopy top-down view, dark green tropical leaves with visible branch structure below',
+};
+
+async function getFalKey() {
+  if (process.env.FAL_KEY) return process.env.FAL_KEY;
+  try {
+    const envFile = join(homedir(), '.all-skills', '.env');
+    const raw = await readFile(envFile, 'utf8');
+    const m = raw.match(/^\s*FAL_KEY\s*=\s*(.+?)\s*$/m);
+    if (m) return m[1].replace(/^["']|["']$/g, '');
+  } catch {}
+  return null;
+}
+
+async function fetchGPTTile(falKey, prompt, quality) {
+  const res = await fetch('https://fal.run/openai/gpt-image-2', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Key ${falKey}` },
+    body: JSON.stringify({ prompt, image_size: { width: 512, height: 512 }, quality, num_images: 1, output_format: 'png' }),
+  });
+  if (!res.ok) throw new Error(`GPT Image 2 (fal): ${res.status} ${await res.text()}`);
+  const data = await res.json();
+  return Buffer.from(await fetch(data.images[0].url).then((r) => r.arrayBuffer()));
+}
+
+function solidTile(buf, ti, ts, stride, r, g, b) {
+  for (let y = 0; y < ts; y++) {
+    for (let x = 0; x < ts; x++) {
+      const i = (y * stride + ti * ts + x) * 4;
+      buf[i] = r; buf[i + 1] = g; buf[i + 2] = b; buf[i + 3] = 255;
+    }
+  }
+}
+
+/**
+ * Generate each tile in the palette via GPT Image 2, stitch into a horizontal strip.
+ * SKY tiles are filled with solid magenta (Game.js hides them via setAlpha(0)).
+ * Falls back to solid-color tiles if FAL_KEY is unavailable or a tile call fails.
+ */
+export async function generateTilesetGPT({ palette, outPath, tileSize = 32, genre = '', tagline = '', quality = 'low', log = console.log }) {
+  await mkdir(dirname(outPath), { recursive: true });
+
+  const falKey = await getFalKey();
+  if (!falKey) {
+    log('⚠ No FAL_KEY — falling back to solid-color tiles');
+    return generateTileset({ palette, outPath, tileSize });
+  }
+
+  const n = palette.length;
+  const outW = tileSize * n;
+  const outH = tileSize;
+  const outBuf = Buffer.alloc(outW * outH * 4, 0);
+
+  for (let i = 0; i < n; i++) {
+    const tile = palette[i];
+
+    // SKY / transparent → solid magenta; Game.js hides it with setAlpha(0)
+    if (tile.id === 'SKY' || tile.color === '#FF00FF') {
+      solidTile(outBuf, i, tileSize, outW, 0xFF, 0x00, 0xFF);
+      continue;
+    }
+
+    const tileDesc = tile.desc
+      ?? TILE_DESC_MAP[tile.id]
+      ?? `${tile.id.toLowerCase().replace(/_/g, ' ')} tile, ${tile.color}-toned surface`;
+
+    const prompt = [
+      `Pixel art game tile, flat seamlessly tileable surface texture: ${tileDesc}.`,
+      genre ? `${genre} game aesthetic.` : '',
+      tagline ? `${tagline}.` : '',
+      'Seamlessly tileable, 16-bit retro pixel art, chunky well-defined pixels, clean sharp edges.',
+      'No text, no characters, no HUD elements, no border frame, no drop shadows.',
+    ].filter(Boolean).join(' ');
+
+    try {
+      log(`  → tile [${i + 1}/${n}] ${tile.id}`);
+      const imgBuf = await fetchGPTTile(falKey, prompt, quality);
+      const pixels = await sharp(imgBuf)
+        .resize(tileSize, tileSize)
+        .ensureAlpha()
+        .raw()
+        .toBuffer();
+
+      for (let y = 0; y < tileSize; y++) {
+        for (let x = 0; x < tileSize; x++) {
+          const si = (y * tileSize + x) * 4;
+          const di = (y * outW + i * tileSize + x) * 4;
+          outBuf[di] = pixels[si]; outBuf[di + 1] = pixels[si + 1];
+          outBuf[di + 2] = pixels[si + 2]; outBuf[di + 3] = pixels[si + 3];
+        }
+      }
+    } catch (err) {
+      log(`  ⚠ ${tile.id} failed (${err.message}), using solid color`);
+      const { r, g, b } = hexToRgb(tile.color ?? '#888888');
+      solidTile(outBuf, i, tileSize, outW, r, g, b);
+    }
+  }
+
+  await sharp(outBuf, { raw: { width: outW, height: outH, channels: 4 } }).png().toFile(outPath);
+  return { sheet: outPath, tileSize, ids: palette.map((p) => p.id) };
 }

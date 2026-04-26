@@ -12,8 +12,8 @@
         "idle",
         "walk"
       ],
-      "cell": 48,
-      "bg": "transparent",
+      "cell": 336,
+      "bg": "magenta",
       "textureKey": "entities-1"
     }
   ],
@@ -33,5 +33,9 @@
       false
     ]
   },
-  "bg": null
+  "bg": {
+    "relPath": "assets/bg.png",
+    "scrollFactor": 0.3,
+    "theme": "city-street"
+  }
 }

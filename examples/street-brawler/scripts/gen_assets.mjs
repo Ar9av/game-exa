@@ -461,24 +461,21 @@ const levelTiles = [];
 for (let r = 0; r < LH; r++) {
   const row = [];
   for (let c = 0; c < LW; c++) {
-    if (r === 0 || r === LH - 1) {
-      row.push(1); // top/bottom border
+    if (r < 5) {
+      row.push(-1); // empty — let the city-street bg image show through
+    } else if (r === LH - 1) {
+      row.push(1); // bottom border wall
     } else if (c === 0 || c === LW - 1) {
-      row.push(1); // side border
-    } else if (r <= 3) {
-      // Building facade: windows every 8 cols (pairs at offsets 2-3)
-      const wc = (c - 2 + LW) % 8;
-      if (r >= 1 && r <= 2 && wc < 2) row.push(0); // window gap (lit window)
-      else row.push(1); // brick wall
-    } else if (r === 4) {
-      row.push(2); // awning shadow strip
+      row.push(1); // side border wall
     } else if (r === 5) {
+      row.push(2); // awning/shadow strip directly above floor
+    } else if (r === 6) {
       // Sidewalk with props
       if (c % 14 === 8) row.push(3); // barrel/crate prop
       else row.push(0);
     } else {
-      // Street floor (rows 6-10): mostly GROUND with shadow patches
-      if (c % 18 === 4 && r === 6) row.push(3); // prop on street
+      // Street floor (rows 7-10): mostly GROUND with shadow patches
+      if (c % 18 === 4 && r === 7) row.push(3); // prop on street
       else if ((c * 3 + r * 7) % 11 === 0) row.push(2); // shadow patch
       else row.push(0); // asphalt
     }

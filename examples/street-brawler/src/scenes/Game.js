@@ -46,7 +46,7 @@ export default class Game extends Phaser.Scene {
     if (manifest.bg) {
       const bg = this.add.image(0, 0, 'bg').setOrigin(0, 0).setDepth(-200);
       bg.setDisplaySize(worldW, this.scale.height);
-      bg.setScrollFactor(0.2);
+      bg.setScrollFactor(manifest.bg.scrollFactor ?? 0.25);
     } else {
       this._buildCityBg(worldW);
     }

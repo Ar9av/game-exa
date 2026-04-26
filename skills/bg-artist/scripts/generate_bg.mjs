@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Generate a parallax background via GPT Image 2 (default provider: fal.ai).
-// Usage: node generate_bg.mjs <project-dir> [--theme outdoor-day|outdoor-night|cave|space|forest] [--quality low|medium|high]
+// Usage: node generate_bg.mjs <project-dir> [--theme outdoor-day|outdoor-night|cave|space|forest|dungeon|city-street|forest-park|warehouse] [--quality low|medium|high]
 import { resolve, join } from 'node:path';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
@@ -9,8 +9,10 @@ import sharp from 'sharp';
 
 const args = process.argv.slice(2);
 const projectDir = resolve(args[0] ?? '.');
-const themeArg = args[args.indexOf('--theme') + 1];
-const quality = args[args.indexOf('--quality') + 1] || 'low';
+const themeIdx = args.indexOf('--theme');
+const themeArg = themeIdx >= 0 ? args[themeIdx + 1] : undefined;
+const qualityIdx = args.indexOf('--quality');
+const quality = qualityIdx >= 0 ? args[qualityIdx + 1] : 'low';
 
 const PROMPTS = {
   'outdoor-day': `A wide pixel art parallax background scene, daytime outdoor. The image is exactly 1280 by 768 pixels. A soft pastel blue sky filling the upper two thirds of the frame. A few large fluffy white pixel-art clouds drifting at different heights. Distant rolling green hills in silhouette across the lower third, layered for depth (lighter hills in back, darker hills in front). A soft gradient horizon line where the sky meets the hills. 8-bit retro pixel art style, chunky pixels, no anti-aliasing, vivid clean colors. No characters, no foreground objects, no text, no UI, no borders.`,
@@ -18,14 +20,21 @@ const PROMPTS = {
   'cave': `A wide pixel art parallax background scene, underground cave interior. The image is exactly 1280 by 768 pixels. A dark damp stone cave wall texture filling the entire frame. Subtle vertical streaks suggesting natural rock striations. A faint warm torch glow in the upper-left, fading into deeper shadow toward the right. A few cracks and small alcoves in the rock face suggesting depth. 8-bit retro pixel art style, chunky pixels, no anti-aliasing, dim moody palette of dark grays, browns, and a hint of warm orange near the glow. No characters, no foreground objects, no text, no UI, no borders.`,
   'space': `A wide pixel art parallax background scene, outer space. The image is exactly 1280 by 768 pixels. A deep dark navy and black space backdrop. Scattered tiny star pixels at three different brightness levels distributed across the frame. One or two large soft nebula clouds in distant purples and blues, blurry and diffuse. A small distant planet silhouette on one side. 8-bit retro pixel art style, chunky pixels, no anti-aliasing, palette of deep blues, purples, blacks, and bright white stars. No characters, no foreground objects, no text, no UI, no borders.`,
   'forest': `A wide pixel art parallax background scene, dense forest depths. The image is exactly 1280 by 768 pixels. A backdrop of overlapping tall pine and oak silhouettes layered for depth. Closer trees in dark forest green, mid-distance trees in muted teal-green, far trees fading into pale blue-green mist. Slivers of dim daylight filtering between trunks. 8-bit retro pixel art style, chunky pixels, no anti-aliasing, restful muted forest palette. No characters, no foreground objects, no text, no UI, no borders.`,
+  'dungeon': `A wide pixel art parallax background scene, dark dungeon interior. The image is exactly 1280 by 768 pixels. Crumbling dark brick and stone walls receding into shadow filling the entire frame. Faint flickering torchlight glowing warm orange on the left side wall, fading to blue-black darkness on the right. Rough stone texture with moisture streaks and cracks. A barely-visible arch or doorway deep in shadow at the center. 8-bit retro pixel art style, chunky pixels, no anti-aliasing, palette of near-blacks, dark greys, deep brown, and a single warm torch-glow accent. No characters, no foreground objects, no text, no UI, no borders.`,
+  'forest-park': `A wide pixel art parallax background scene, Double Dragon style forest park brawler backdrop. The image is exactly 1280 by 768 pixels. Three depth layers: far layer is a muted blue-grey sky with distant canopy silhouettes; middle layer shows orange-brown tree trunks and a wooden fence; foreground strip is a dirt ground strip. NES Double Dragon color palette — warm earthy oranges, muted greens, dusty browns. 8-bit retro pixel art style, chunky pixels, no anti-aliasing. No characters, no foreground objects, no text, no UI, no borders.`,
+  'city-street': `A wide pixel art parallax background scene, urban nighttime city street beat-em-up backdrop. The image is exactly 1280 by 768 pixels. Far layer: dark grey building facades with small lit windows scattered across them, deep blue-black sky above. Mid layer: parked car silhouettes and dumpsters in silhouette. Foreground strip: dark sidewalk pavement. Urban night palette of deep greys, dark blues, and warm yellow-orange window lights. 8-bit retro pixel art style, chunky pixels, no anti-aliasing. No characters, no foreground objects, no text, no UI, no borders.`,
+  'warehouse': `A wide pixel art parallax background scene, industrial warehouse interior. The image is exactly 1280 by 768 pixels. Industrial brick walls with high rectangular windows letting in shafts of dim light. Overhead fluorescent light pools casting harsh shadows downward. Stacked crates and pallets silhouetted in the mid distance. Dark steel girders crossing the ceiling. Palette of dark greys, rust browns, and dim yellowish light pools. 8-bit retro pixel art style, chunky pixels, no anti-aliasing. No characters, no foreground objects, no text, no UI, no borders.`,
 };
 
 const GENRE_DEFAULT = {
   'platformer':         'outdoor-day',
-  'top-down-adventure': null,                  // use tilemap fill, skip bg
+  'action-platformer':  'dungeon',
+  'top-down-adventure': null,
+  'top-down-rpg':       null,
   'shoot-em-up':        'space',
   'twin-stick-shooter': 'space',
   'dungeon-crawler':    'cave',
+  'beat-em-up':         'city-street',
   'puzzle':             null,
 };
 

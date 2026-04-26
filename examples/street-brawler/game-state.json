@@ -14,25 +14,112 @@
     "controls": {
       "movement": "4-direction",
       "actions": [
-        { "key": "SPACE", "name": "attack", "description": "Punch nearby enemies" },
-        { "key": "Z",     "name": "jump",   "description": "Visual hop to dodge" }
+        {
+          "key": "SPACE",
+          "name": "attack",
+          "description": "Punch nearby enemies"
+        },
+        {
+          "key": "Z",
+          "name": "jump",
+          "description": "Visual hop to dodge"
+        }
       ]
     },
     "entities": [
-      { "id": "BRAWLER", "kind": "player", "color": "teal-blue",  "desc": "Muscular hero in teal leather jacket and jeans", "states": ["idle","walk"], "speed": 90, "hp": 5 },
-      { "id": "THUG",    "kind": "enemy",  "color": "dark-grey",  "desc": "Street thug in torn grey shirt with bare arms",  "states": ["idle","walk"], "speed": 60, "hp": 2 },
-      { "id": "BOSS",    "kind": "boss",   "color": "red-black",  "desc": "Large gang leader in red jacket with gold chain", "states": ["idle","walk"], "speed": 45, "hp": 8 }
+      {
+        "id": "BRAWLER",
+        "kind": "player",
+        "color": "teal-blue",
+        "desc": "Muscular hero in teal leather jacket and jeans",
+        "states": [
+          "idle",
+          "walk"
+        ],
+        "speed": 90,
+        "hp": 5
+      },
+      {
+        "id": "THUG",
+        "kind": "enemy",
+        "color": "dark-grey",
+        "desc": "Street thug in torn grey shirt with bare arms",
+        "states": [
+          "idle",
+          "walk"
+        ],
+        "speed": 60,
+        "hp": 2
+      },
+      {
+        "id": "BOSS",
+        "kind": "boss",
+        "color": "red-black",
+        "desc": "Large gang leader in red jacket with gold chain",
+        "states": [
+          "idle",
+          "walk"
+        ],
+        "speed": 45,
+        "hp": 8
+      }
     ],
     "tilesetPalette": [
-      { "id": "GROUND", "color": "#44403c", "passable": true  },
-      { "id": "WALL",   "color": "#28221e", "passable": false },
-      { "id": "SHADOW", "color": "#2a2624", "passable": true  },
-      { "id": "PROP",   "color": "#7a5a2a", "passable": false }
+      {
+        "id": "GROUND",
+        "color": "#44403c",
+        "passable": true
+      },
+      {
+        "id": "WALL",
+        "color": "#28221e",
+        "passable": false
+      },
+      {
+        "id": "SHADOW",
+        "color": "#2a2624",
+        "passable": true
+      },
+      {
+        "id": "PROP",
+        "color": "#7a5a2a",
+        "passable": false
+      }
     ],
     "levelHints": {
-      "size": [60, 12],
+      "size": [
+        60,
+        12
+      ],
       "count": 1,
-      "themes": ["city-street"]
+      "themes": [
+        "city-street"
+      ]
+    }
+  },
+  "assets": {
+    "sprites": [
+      {
+        "sheet": "/Users/ar9av/Documents/projects/game-creation-agent/examples/street-brawler/public/assets/entities.png",
+        "relSheet": "assets/entities.png",
+        "rows": [
+          "BRAWLER",
+          "THUG",
+          "BOSS"
+        ],
+        "cols": [
+          "idle",
+          "walk"
+        ],
+        "cell": 336,
+        "bg": "magenta",
+        "textureKey": "entities-1"
+      }
+    ],
+    "bg": {
+      "relPath": "assets/bg.png",
+      "scrollFactor": 0.3,
+      "theme": "city-street"
     }
   }
 }

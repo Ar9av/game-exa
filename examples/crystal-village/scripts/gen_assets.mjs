@@ -198,19 +198,21 @@ const eb = Buffer.alloc(EW * EH * 4, 0);
 
 // ── Character drawing helpers ─────────────────────────────────────────────────
 
-// Draw outline around all opaque pixels
+// Draw 1-pixel outline around all opaque pixels — two-pass to avoid cascade.
+// Outline is clamped to [x0,x0+sz) × [y0,y0+sz) so it never bleeds into adjacent cells.
 function addOutline(buf, W, x0, y0, sz, or, og, ob) {
-  const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+  const toFill = [];
   for (let y = y0; y < y0+sz; y++)
     for (let x = x0; x < x0+sz; x++) {
       if (buf[(y*W+x)*4+3] < 200) continue;
-      for (const [dx,dy] of dirs) {
+      for (const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
         const nx = x+dx, ny = y+dy;
-        if (nx < 0 || nx >= W || ny < 0) continue;
-        if (buf[(ny*W+nx)*4+3] < 200)
-          pix(buf, W, nx, ny, or, og, ob);
+        if (nx < x0 || nx >= x0+sz || ny < y0 || ny >= y0+sz) continue;
+        if (buf[(ny*W+nx)*4+3] < 200) toFill.push(nx, ny);
       }
     }
+  for (let i = 0; i < toFill.length; i += 2)
+    pix(buf, W, toFill[i], toFill[i+1], or, og, ob);
 }
 
 // ─── HERO (row 0): blue adventurer ─────────────────────────────────────────

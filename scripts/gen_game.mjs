@@ -1,10 +1,15 @@
 #!/usr/bin/env node
 /**
  * Asset generator — bypasses LLM stages, uses hardcoded GDDs and levels,
- * then calls GPT Image 2 (via fal.ai) for sprites + background, and
- * procedural generation for the tileset.
+ * then calls GPT Image 2 (via fal.ai) for sprites, tiles, and background.
  *
- * Usage: node scripts/gen_game.mjs dungeon-knight|dragon-brawl|island-quest
+ * Tile generation: generateTilesetGPT() makes one GPT Image 2 call per
+ * non-SKY tile type (512×512 → 32×32), using each palette entry's `desc`
+ * field as the prompt. Solid-color fallback per tile if a call fails.
+ * SKY tiles are filled magenta; Game.js hides them via setAlpha(0).
+ *
+ * Usage: node --env-file=~/.all-skills/.env scripts/gen_game.mjs <game-name>
+ * Games: dungeon-knight | dragon-brawl | island-quest | sewer-bot
  */
 import { resolve, join, dirname } from 'node:path';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';

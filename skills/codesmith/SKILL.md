@@ -96,6 +96,151 @@ export default class Game extends Phaser.Scene {
 }
 ```
 
+## NES-quality visual patterns (use these — not plain text HUD)
+
+Generated games must use real visual effects, not just text labels. These patterns are copy-pasteable and tested across all 4 example games.
+
+### HUD — NES-style segmented HP bar + portrait box
+
+```js
+_buildHud() {
+  const W = this.scale.width;
+  // Portrait box (top-left)
+  this.add.rectangle(4, 4, 36, 36, 0x000000).setOrigin(0).setScrollFactor(0).setDepth(300);
+  this.add.rectangle(5, 5, 34, 34, 0x111111).setOrigin(0).setScrollFactor(0).setDepth(301);
+  const portrait = this.add.sprite(22, 22, texMap.PLAYER_ENTITY).setScrollFactor(0).setDepth(302);
+  portrait.setDisplaySize(28, 28);
+  // Segmented HP bar (10 segments)
+  this._hpSegments = [];
+  for (let i = 0; i < MAX_HP; i++) {
+    const seg = this.add.rectangle(46 + i * 12, 8, 10, 8, 0xdd2222).setOrigin(0).setScrollFactor(0).setDepth(300);
+    this._hpSegments.push(seg);
+  }
+  // Lives counter
+  this._livesTxt = this.add.text(4, 44, '×3', { fontSize: '11px', fill: '#fff', stroke: '#000', strokeThickness: 2 }).setScrollFactor(0).setDepth(300);
+  // Score (top-right, yellow)
+  this._scoreTxt = this.add.text(W - 8, 4, 'SCORE\n000000', { fontSize: '11px', fill: '#ffdd00', align: 'right' }).setOrigin(1, 0).setScrollFactor(0).setDepth(300);
+}
+
+_refreshHud() {
+  this._hpSegments.forEach((seg, i) => seg.setVisible(i < this.playerHp));
+  this._scoreTxt.setText('SCORE\n' + String(this.score).padStart(6, '0'));
+}
+```
+
+### Hit particles
+
+```js
+_emitHitParticles(x, y, color = 0xffffff) {
+  for (let i = 0; i < 5; i++) {
+    const g = this.add.graphics();
+    g.fillStyle(color, 1);
+    g.fillRect(0, 0, 4, 4);
+    g.setPosition(x, y).setDepth(50);
+    const angle = (Math.PI * 2 * i) / 5;
+    this.tweens.add({
+      targets: g, x: x + Math.cos(angle) * 28, y: y + Math.sin(angle) * 28,
+      alpha: 0, duration: 240, onComplete: () => g.destroy(),
+    });
+  }
+}
+```
+
+### Pickup sparkle
+
+```js
+_pickupSparkle(x, y) {
+  const c = this.add.circle(x, y, 1, 0xffffff, 0.9).setDepth(60);
+  this.tweens.add({ targets: c, scaleX: 18, scaleY: 18, alpha: 0, duration: 220, onComplete: () => c.destroy() });
+}
+```
+
+### Enemy death animation
+
+```js
+_killEnemy(e) {
+  let flashes = 0;
+  const flash = () => {
+    if (flashes++ >= 3 || !e.active) return;
+    e.setTint(0xffffff);
+    this.time.delayedCall(60, () => { if (e.active) { e.clearTint(); this.time.delayedCall(60, flash); } });
+  };
+  flash();
+  if (e.body) e.body.setAllowGravity(true);
+  this.tweens.add({ targets: e, alpha: 0, y: e.y + 30, duration: 380, onComplete: () => e.destroy() });
+}
+```
+
+### Screen flash (on player hurt or big event)
+
+```js
+_screenFlash() {
+  const { width: W, height: H } = this.scale;
+  const fl = this.add.rectangle(W / 2, H / 2, W, H, 0xffffff, 0.4).setScrollFactor(0).setDepth(500);
+  this.tweens.add({ targets: fl, alpha: 0, duration: 180, onComplete: () => fl.destroy() });
+}
+```
+
+### 3-layer parallax background (action-platformer / platformer)
+
+```js
+// In create(), after checking manifest.bg:
+if (manifest.bg) {
+  this.add.image(0, 0, 'bg').setOrigin(0).setScrollFactor(0.05).setDepth(-300).setDisplaySize(worldW, worldH);
+  this.add.image(0, 0, 'bg').setOrigin(0).setScrollFactor(0.15).setDepth(-200).setDisplaySize(worldW, worldH).setAlpha(0.6);
+  this.add.image(0, 0, 'bg').setOrigin(0).setScrollFactor(0.35).setDepth(-100).setDisplaySize(worldW, worldH).setAlpha(0.35);
+}
+```
+
+### Beat-em-up combo counter
+
+```js
+// In _hitEnemy():
+this._comboCount = (this._comboCount ?? 0) + 1;
+clearTimeout(this._comboTimer);
+this._comboTimer = setTimeout(() => { this._comboCount = 0; }, 1500);
+if (this._comboCount >= 2) {
+  const txt = this.add.text(e.x, e.y - 20, `×${this._comboCount}`, {
+    fontSize: '14px', fill: '#ffdd00', stroke: '#000', strokeThickness: 3,
+  }).setDepth(80);
+  this.tweens.add({ targets: txt, y: txt.y - 28, alpha: 0, duration: 600, onComplete: () => txt.destroy() });
+}
+```
+
+### Coyote-time jump (action-platformer)
+
+```js
+const COYOTE_MS = 80;
+// In update():
+if (this.player.body.blocked.down) { this._coyote = COYOTE_MS; this._isJumping = false; }
+else { this._coyote = Math.max(0, this._coyote - delta); }
+
+if (Phaser.Input.Keyboard.JustDown(jumpKey) && this._coyote > 0 && !this._isJumping) {
+  this.player.body.setVelocityY(JUMP_VY);  // e.g. -380
+  this._coyote = 0;
+  this._isJumping = true;
+}
+// Variable jump height (release early = shorter jump):
+if (!jumpKey.isDown && this.player.body.velocity.y < -80) {
+  this.player.body.setVelocityY(this.player.body.velocity.y * 0.88);
+}
+```
+
+### Platform-edge-aware enemy patrol
+
+```js
+_patrolEnemy(e, delta) {
+  const ts = manifest.tiles.tileSize;
+  const dir = e.getData('dir') ?? 1;
+  const nextX = e.x + dir * (ts * 0.6);
+  const tileAhead = this._tileLayer.getTileAtWorldXY(nextX, e.y);
+  const tileBelow = this._tileLayer.getTileAtWorldXY(nextX, e.y + ts * 0.6);
+  if (!tileBelow || tileAhead) e.setData('dir', -dir);  // flip at edge or wall
+  e.body.setVelocityX(e.getData('dir') * e.getData('speed'));
+  e.setFlipX(e.getData('dir') < 0);
+}
+```
+
 ## Hard rules
 
 1. **ES module syntax** — `import Phaser from 'phaser'`, `export default class`. No CJS, no TypeScript.

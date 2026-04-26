@@ -99,7 +99,7 @@ Every animation is `<ENTITY_ID>-<state-lowercase>`, e.g. `KNIGHT-walk`, `SLIME-h
 3. Invoke **world-architect** with the GDD. Save levels. Validate.
 4. In parallel:
    - Invoke **sprite-artist** (default: GPT Image 2 at `quality: low`; `--placeholder` for free iteration).
-   - Invoke **tile-artist** (`generate_tiles_gpt.mjs` for real pixel-art tiles, or `paint_tiles.mjs` for procedural).
+   - Invoke **tile-artist** (`generateTilesetGPT()` via `src/lib/sprites.js` — one GPT Image 2 call per tile type, 512×512 → 32×32; auto-falls back to solid-color if no FAL_KEY).
    - Invoke **bg-artist** (`generate_bg.mjs --theme <theme>`). Skip when genre is top-down-adventure or abstract puzzle.
 5. Write `public/assets/manifest.json` and `public/data/levels.json` from state (the asset skills merge into the manifest as they go).
 6. Invoke **codesmith** with GDD + levels + manifest. Writes `src/scenes/Game.js` (and optional helpers under `src/`). Codesmith reads `manifest.bg` and adds the parallax-background pattern when present.

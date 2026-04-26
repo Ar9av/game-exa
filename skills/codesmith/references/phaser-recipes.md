@@ -168,6 +168,64 @@ this.hud = this.add.text(4, 4, '', { fontSize: '8px', color: '#fff', backgroundC
 if (this.hud) this.hud.setText(`HP ${this.playerHp}  ${this.metric}/${this.target}`);
 ```
 
+## Polish patterns (cheap visual wins)
+
+**Idle bob** — gentle vertical breath on grounded, stationary entities:
+```js
+this.idleBob = this.tweens.add({
+  targets: this.player, y: '+=1', duration: 350, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', paused: true,
+});
+// pause/resume in update() based on body.blocked.down && b.velocity.x === 0
+```
+
+**Coin spin illusion** — scaleX yoyo + small bob:
+```js
+this.tweens.add({ targets: c, scaleX: { from: 1, to: -1 }, duration: 600, yoyo: true, repeat: -1 });
+this.tweens.add({ targets: c, y: c.y - 3, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+```
+
+**Squash on jump takeoff**:
+```js
+this.tweens.add({ targets: this.player, scaleY: 0.85, scaleX: 1.15, duration: 90, yoyo: true });
+```
+
+**Pickup pop + particle burst** (small rectangles spreading outward):
+```js
+this.tweens.add({ targets: pickup, scale: pickup.scale * 1.8, alpha: 0, duration: 180, onComplete: () => pickup.destroy() });
+for (let i = 0; i < 6; i++) {
+  const p = this.add.rectangle(pickup.x, pickup.y, 2, 2, 0xffd84a).setDepth(50);
+  const ang = (i / 6) * Math.PI * 2;
+  this.tweens.add({ targets: p, x: p.x + Math.cos(ang) * 14, y: p.y + Math.sin(ang) * 14, alpha: 0, duration: 280, onComplete: () => p.destroy() });
+}
+```
+
+**Hurt feedback** — tint flash + alpha blink during i-frames + camera shake:
+```js
+this.cameras.main.shake(140, 0.008);
+this.player.setTint(0xff5555);
+this.tweens.add({ targets: this.player, alpha: 0.3, duration: 80, yoyo: true, repeat: 6,
+  onComplete: () => { this.player.setAlpha(1); this.player.clearTint(); } });
+```
+
+**Win celebration** — flash + scale-in text + radial particle burst:
+```js
+this.cameras.main.flash(280, 100, 220, 100);
+const t = this.add.text(cx, cy, 'YOU WIN!', { fontSize:'32px', color:'#fff7c4', stroke:'#000', strokeThickness:4 })
+  .setOrigin(0.5).setScrollFactor(0).setDepth(200).setScale(0);
+this.tweens.add({ targets: t, scale: 1, duration: 360, ease: 'Back.easeOut' });
+```
+
+**Camera zoom for chunky feel**:
+```js
+this.cameras.main.setZoom(2);
+this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+```
+
+**Restart on R** — bind once, scene.restart wipes state cleanly:
+```js
+this.input.keyboard.once('keydown-R', () => this.scene.restart());
+```
+
 ## Pixel-perfect rendering (already in template config, but reaffirm)
 
 ```js

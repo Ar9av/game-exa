@@ -11,11 +11,10 @@
       "cols": [
         "idle",
         "walk",
-        "hurt",
         "jump"
       ],
-      "cell": 32,
-      "bg": "transparent",
+      "cell": 272,
+      "bg": "magenta",
       "textureKey": "entities-1"
     }
   ],

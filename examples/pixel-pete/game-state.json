@@ -30,8 +30,7 @@
         "states": [
           "idle",
           "walk",
-          "jump",
-          "hurt"
+          "jump"
         ],
         "speed": 120,
         "hp": 3
@@ -43,8 +42,7 @@
         "desc": "A flying purple bat",
         "states": [
           "idle",
-          "walk",
-          "hurt"
+          "walk"
         ],
         "speed": 50,
         "hp": 1

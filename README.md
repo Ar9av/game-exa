@@ -10,7 +10,7 @@ All screenshots taken live from headless Chromium via the gap-checker dynamic la
 
 | Game | Genre | Screenshot |
 |------|-------|-----------|
-| **Crystal Village** — RPG hero explores a magical village, chats with NPCs, collects 5 glowing crystals | RPG Overworld | ![crystal-village](docs/screenshots/crystal-village.png) |
+| **Crystal Village** — RPG hero explores a magical village, chats with NPCs (portrait dialogue), collects 5 glowing crystals | RPG Overworld | ![crystal-village](docs/screenshots/crystal-village.png) |
 | **Pixel Pete** — Jumpy hero collecting coins through floating platforms | Platformer | ![pixel-pete](docs/screenshots/pixel-pete.png) |
 | **Void Breaker** — Geometry Wars-style arena shooter; survive 10 neon waves | Arena shooter | ![void-breaker](docs/screenshots/void-breaker.png) |
 | **Slime Slayer** — Pixel knight collecting gems while dodging slimes | Top-down adventure | ![slime-slayer](docs/screenshots/slime-slayer.png) |

@@ -36,7 +36,9 @@ node skills/gap-checker/scripts/dynamic_check.mjs examples/crystal-village --por
 
 ## Visual notes
 
-`slime-slayer` and `star-defender` use **procedural placeholder sprites** (flat-color cells) — that's what game-exa generates without an image-generation API key, or with `--placeholder-sprites`. `pixel-pete` and `crystal-village` have hand-crafted pixel-art tilesets.
+`slime-slayer` and `star-defender` use **procedural placeholder sprites** (flat-color cells) — that's what game-exa generates without an image-generation API key, or with `--placeholder-sprites`.
+
+`crystal-village` and `pixel-pete` have hand-crafted procedural pixel-art tilesets and entity sprites. `crystal-village` features full humanoid characters (hero, elder, villager, guard) with a portrait dialogue system — pressing Z near an NPC opens a typewriter dialogue box with their sprite portrait on the left.
 
 To regenerate with real **GPT Image 2** (`gpt-image-2`) assets, set `FAL_KEY` (or `OPENAI_API_KEY`) and re-run:
 

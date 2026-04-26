@@ -5,20 +5,38 @@ class DialogBox {
   constructor(scene) {
     this.scene = scene;
     const W = scene.scale.width, H = scene.scale.height;
-    const BH = 82, BY = H - BH - 4;
+    const BH = 90, BY = H - BH - 4;
+    const PORT = 68, PORT_X = 10, PORT_Y = BY + 11;
+    const TEXT_X = PORT_X + PORT + 8; // 86
 
     this.bg = scene.add.graphics()
       .setScrollFactor(0).setDepth(200).setVisible(false);
     this._drawBg(W, BY, BH);
 
-    this.nameLabel = scene.add.text(14, BY + 7, '', {
+    // Portrait frame
+    this.portBg = scene.add.graphics()
+      .setScrollFactor(0).setDepth(201).setVisible(false);
+    this.portBg.fillStyle(0x040c1a, 0.95);
+    this.portBg.fillRoundedRect(PORT_X, PORT_Y, PORT, PORT, 5);
+    this.portBg.lineStyle(1.5, 0x5566ee, 0.95);
+    this.portBg.strokeRoundedRect(PORT_X, PORT_Y, PORT, PORT, 5);
+    this.portBg.lineStyle(1, 0x334499, 0.5);
+    this.portBg.strokeRoundedRect(PORT_X + 2, PORT_Y + 2, PORT - 4, PORT - 4, 3);
+
+    // Portrait sprite
+    this.portrait = scene.add.image(
+      PORT_X + PORT / 2, PORT_Y + PORT / 2, 'entities-1', 0
+    ).setScrollFactor(0).setDepth(202).setVisible(false)
+      .setDisplaySize(PORT - 8, PORT - 8);
+
+    this.nameLabel = scene.add.text(TEXT_X, BY + 8, '', {
       fontSize: '8px', color: '#ffd84a', fontFamily: 'monospace',
       stroke: '#000', strokeThickness: 2,
     }).setScrollFactor(0).setDepth(201).setVisible(false);
 
-    this.bodyText = scene.add.text(14, BY + 22, '', {
-      fontSize: '7px', color: '#eeeeee', fontFamily: 'monospace',
-      wordWrap: { width: W - 28 }, lineSpacing: 2,
+    this.bodyText = scene.add.text(TEXT_X, BY + 24, '', {
+      fontSize: '7px', color: '#ddeeff', fontFamily: 'monospace',
+      wordWrap: { width: W - TEXT_X - 14 }, lineSpacing: 3,
     }).setScrollFactor(0).setDepth(201).setVisible(false);
 
     this.cursor = scene.add.text(W - 12, H - 8, '▼', {
@@ -37,13 +55,15 @@ class DialogBox {
 
   _drawBg(W, BY, BH) {
     this.bg.clear();
-    this.bg.fillStyle(0x000000, 0.84);
-    this.bg.fillRoundedRect(6, BY, W - 12, BH, 6);
-    this.bg.lineStyle(1, 0x6666cc, 0.85);
-    this.bg.strokeRoundedRect(6, BY, W - 12, BH, 6);
+    this.bg.fillStyle(0x04091c, 0.93);
+    this.bg.fillRoundedRect(6, BY, W - 12, BH, 8);
+    this.bg.lineStyle(1.5, 0x4455cc, 0.9);
+    this.bg.strokeRoundedRect(6, BY, W - 12, BH, 8);
+    this.bg.lineStyle(1, 0x223388, 0.4);
+    this.bg.strokeRoundedRect(8, BY + 2, W - 16, BH - 4, 6);
   }
 
-  show(name, lines) {
+  show(name, lines, tex, frame) {
     this.allLines = Array.isArray(lines) ? [...lines] : [lines];
     this.lineIdx  = 0;
     this.active   = true;
@@ -51,6 +71,15 @@ class DialogBox {
     this.nameLabel.setVisible(true).setText(name);
     this.bodyText.setVisible(true);
     this.cursor.setVisible(true);
+
+    if (tex !== undefined) {
+      this.portrait.setTexture(tex, frame ?? 0).setVisible(true);
+      this.portBg.setVisible(true);
+    } else {
+      this.portrait.setVisible(false);
+      this.portBg.setVisible(false);
+    }
+
     this._typeLine(this.allLines[0]);
   }
 
@@ -91,6 +120,8 @@ class DialogBox {
     this.typing = false;
     if (this.typeEvent) { this.typeEvent.remove(); this.typeEvent = null; }
     this.bg.setVisible(false);
+    this.portBg.setVisible(false);
+    this.portrait.setVisible(false);
     this.nameLabel.setVisible(false);
     this.bodyText.setVisible(false);
     this.cursor.setVisible(false);
@@ -102,11 +133,11 @@ export default class Game extends Phaser.Scene {
   constructor() { super({ key: 'Game' }); }
 
   init(data) {
-    this.levelIndex       = data?.levelIndex ?? 0;
+    this.levelIndex        = data?.levelIndex ?? 0;
     this.crystalsCollected = 0;
-    this.gameOver         = false;
-    this.won              = false;
-    this.nearNpc          = null;
+    this.gameOver          = false;
+    this.won               = false;
+    this.nearNpc           = null;
   }
 
   create() {
@@ -116,6 +147,10 @@ export default class Game extends Phaser.Scene {
     const tileSize = manifest.tiles.tileSize;
     const worldW   = level.size[0] * tileSize;
     const worldH   = level.size[1] * tileSize;
+
+    // ── atmospheric background ───────────────────────────────────────────────
+    this.cameras.main.setBackgroundColor('#0b1a0b');
+    this._buildBackLayer(worldW, worldH);
 
     // ── tilemap ─────────────────────────────────────────────────────────────
     const map     = this.make.tilemap({ data: level.tiles, tileWidth: tileSize, tileHeight: tileSize });
@@ -164,7 +199,7 @@ export default class Game extends Phaser.Scene {
     };
 
     // ── entities ─────────────────────────────────────────────────────────────
-    this.npcs    = [];
+    this.npcs     = [];
     this.crystals = this.physics.add.group({ allowGravity: false });
 
     for (const sp of level.spawns) {
@@ -186,12 +221,12 @@ export default class Game extends Phaser.Scene {
 
       } else if (NPC_LINES[sp.entity]) {
         const npc = this.add.sprite(px, py, sh.tex, sh.rowIdx * sh.cols);
-        npc.entityId  = sp.entity;
+        npc.entityId     = sp.entity;
         npc.dialogueData = NPC_LINES[sp.entity];
+        npc.sheetInfo    = sh;
         npc.setDisplaySize(tileSize * 1.1, tileSize * 1.1);
         npc.play(sp.entity + '-idle');
 
-        // "!" proximity indicator
         npc.indicator = this.add.text(px, py - tileSize * 0.85, '!', {
           fontSize: '11px', color: '#ffe000',
           stroke: '#000000', strokeThickness: 3,
@@ -211,7 +246,7 @@ export default class Game extends Phaser.Scene {
         );
         c.play('CRYSTAL-idle');
         this.tweens.add({ targets: c, y: c.y - 5, duration: 950, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-        try { if (c.postFX) c.postFX.addGlow(0x44ddff, 5, 0, false, 0.1, 14); } catch (_) { /* postFX unsupported in this WebGL context */ }
+        try { if (c.postFX) c.postFX.addGlow(0x44ddff, 5, 0, false, 0.1, 14); } catch (_) { /* postFX unsupported */ }
       }
     }
 
@@ -223,7 +258,6 @@ export default class Game extends Phaser.Scene {
       crystal.collected = true;
       crystal.body.enable = false;
       this.tweens.killTweensOf(crystal);
-      // Burst effect
       for (let i = 0; i < 8; i++) {
         const p = this.add.rectangle(crystal.x, crystal.y, 2, 2, 0x44ddff).setDepth(80);
         const a = (i / 8) * Math.PI * 2;
@@ -250,33 +284,117 @@ export default class Game extends Phaser.Scene {
     this.dialogBox = new DialogBox(this);
 
     // ── HUD ──────────────────────────────────────────────────────────────────
-    this.hud = this.add.text(6, 6, '', {
-      fontSize: '8px', color: '#ffffff', fontFamily: 'monospace',
-      stroke: '#000000', strokeThickness: 3,
-    }).setScrollFactor(0).setDepth(150);
+    this._buildHud();
 
     // Hint label
     this.hint = this.add.text(this.scale.width / 2, this.scale.height - 10, 'Z / SPACE — talk', {
-      fontSize: '6px', color: '#888888', fontFamily: 'monospace',
-    }).setScrollFactor(0).setDepth(150).setOrigin(0.5, 1).setAlpha(0.6);
+      fontSize: '6px', color: '#88aacc', fontFamily: 'monospace',
+    }).setScrollFactor(0).setDepth(150).setOrigin(0.5, 1).setAlpha(0.7);
+
+    // Ambient sparkles
+    this._createSparkles(worldW, worldH);
 
     this.updateState();
     this.events.emit('scene-ready');
+  }
+
+  _buildBackLayer(worldW, worldH) {
+    // Distant tree silhouette strip at the top of the world (parallax)
+    const bg = this.add.graphics().setDepth(-10).setScrollFactor(0.25);
+    bg.fillStyle(0x0a1a08, 1);
+    // horizon band
+    bg.fillRect(0, -60, worldW, 80);
+    // tree canopy blobs
+    bg.fillStyle(0x081408, 1);
+    for (let i = 0; i < 30; i++) {
+      const tx = i * 68 + (i % 3) * 20;
+      const ty = -20 + Math.sin(i * 1.7) * 12;
+      const r  = 20 + (i % 4) * 8;
+      bg.fillCircle(tx, ty, r);
+      bg.fillRect(tx - 5, ty, 10, 40);
+    }
+    // Ground mist at the bottom edge
+    const mist = this.add.graphics().setDepth(-9).setScrollFactor(0.4);
+    for (let i = 0; i < 5; i++) {
+      mist.fillStyle(0x1a3520, 0.08 - i * 0.015);
+      mist.fillRect(0, worldH - 40 + i * 8, worldW, 40);
+    }
+  }
+
+  _createSparkles(worldW, worldH) {
+    const colors = [0x44ddff, 0x88ffcc, 0xffd84a, 0xaaffee, 0xffffff];
+    for (let i = 0; i < 22; i++) {
+      const r     = Math.random() < 0.5 ? 1 : 1.5;
+      const color = colors[i % colors.length];
+      const dot   = this.add.circle(
+        Phaser.Math.Between(8, worldW - 8),
+        Phaser.Math.Between(8, worldH - 8),
+        r, color, 0,
+      ).setDepth(-2);
+      this._loopSparkle(dot, worldW, worldH);
+    }
+  }
+
+  _loopSparkle(dot, worldW, worldH) {
+    const sx  = Phaser.Math.Between(8, worldW - 8);
+    const sy  = Phaser.Math.Between(8, worldH - 8);
+    const dur = Phaser.Math.Between(2200, 5500);
+    dot.setPosition(sx, sy).setAlpha(0);
+    this.tweens.add({
+      targets: dot,
+      y:       sy - Phaser.Math.Between(12, 38),
+      alpha:   { from: 0, to: 0.75 },
+      duration: dur,
+      ease:    'Sine.easeInOut',
+      yoyo:    true,
+      onComplete: () => this._loopSparkle(dot, worldW, worldH),
+    });
+  }
+
+  _buildHud() {
+    const W = this.scale.width;
+    // Panel bg
+    this.hudBg = this.add.graphics().setScrollFactor(0).setDepth(149);
+    this.hudBg.fillStyle(0x000000, 0.55);
+    this.hudBg.fillRoundedRect(4, 4, 120, 20, 4);
+    this.hudBg.lineStyle(1, 0x4455bb, 0.6);
+    this.hudBg.strokeRoundedRect(4, 4, 120, 20, 4);
+
+    // Crystal icon — small diamond shape
+    const ico = this.add.graphics().setScrollFactor(0).setDepth(150);
+    ico.fillStyle(0x44ddff, 0.9);
+    ico.fillTriangle(14, 8, 20, 14, 14, 20);
+    ico.fillStyle(0x88eeff, 0.9);
+    ico.fillTriangle(14, 8, 8, 14, 14, 20);
+    ico.lineStyle(1, 0x2299cc, 1);
+    ico.strokeTriangle(8, 14, 14, 8, 20, 14);
+    ico.strokeTriangle(8, 14, 14, 20, 20, 14);
+
+    this.hud = this.add.text(26, 7, '', {
+      fontSize: '8px', color: '#aaddff', fontFamily: 'monospace',
+      stroke: '#000000', strokeThickness: 3,
+    }).setScrollFactor(0).setDepth(150);
+
+    // Wave label (right side)
+    this.timeLabel = this.add.text(W - 6, 7, '', {
+      fontSize: '7px', color: '#888888', fontFamily: 'monospace',
+      stroke: '#000000', strokeThickness: 2,
+    }).setScrollFactor(0).setDepth(150).setOrigin(1, 0).setAlpha(0.8);
   }
 
   _onInteract() {
     if (this.gameOver) return;
     if (this.dialogBox.active) { this.dialogBox.advance(); return; }
     if (this.nearNpc) {
-      const d = this.nearNpc.dialogueData;
-      this.dialogBox.show(d.name, d.lines);
+      const d  = this.nearNpc.dialogueData;
+      const sh = this.nearNpc.sheetInfo;
+      this.dialogBox.show(d.name, d.lines, sh?.tex, sh ? sh.rowIdx * sh.cols : undefined);
     }
   }
 
   update(_t, _d) {
     if (!this.player || this.gameOver) return;
 
-    // ── movement (locked during dialogue) ───────────────────────────────────
     const b     = this.player.body;
     const speed = 82;
     b.setVelocity(0);
@@ -300,12 +418,12 @@ export default class Game extends Phaser.Scene {
       }
     }
 
-    // ── y-sort depth ─────────────────────────────────────────────────────────
+    // y-sort depth
     this.player.setDepth(this.player.y + 2);
     for (const npc of this.npcs) npc.setDepth(npc.y + 2);
     for (const c of this.crystals.getChildren()) c.setDepth(c.y + 1);
 
-    // ── NPC proximity ────────────────────────────────────────────────────────
+    // NPC proximity
     let nearest = null, nearDist = 54;
     for (const npc of this.npcs) {
       npc.indicator.setVisible(false);
@@ -328,7 +446,9 @@ export default class Game extends Phaser.Scene {
       playerY:           this.player ? this.player.y : 0,
       crystalsCollected: this.crystalsCollected,
     };
-    if (this.hud) this.hud.setText(`Crystals ${this.crystalsCollected}/5`);
+    if (this.hud) {
+      this.hud.setText(`Crystals  ${this.crystalsCollected} / 5`);
+    }
   }
 
   win() {
@@ -338,14 +458,13 @@ export default class Game extends Phaser.Scene {
     this.updateState();
     this.events.emit('game-won');
 
-    // Close any open dialogue
     if (this.dialogBox.active) this.dialogBox.hide();
 
     this.cameras.main.flash(320, 100, 190, 255);
     const { width: W, height: H } = this.scale;
 
     const panel = this.add.graphics().setScrollFactor(0).setDepth(300);
-    panel.fillStyle(0x000000, 0.75);
+    panel.fillStyle(0x000000, 0.78);
     panel.fillRoundedRect(W * 0.1, H * 0.28, W * 0.8, H * 0.44, 10);
     panel.lineStyle(2, 0xffd700, 1);
     panel.strokeRoundedRect(W * 0.1, H * 0.28, W * 0.8, H * 0.44, 10);
@@ -357,12 +476,10 @@ export default class Game extends Phaser.Scene {
     this.tweens.add({ targets: title, scale: 1, duration: 420, ease: 'Back.easeOut' });
 
     this.time.delayedCall(480, () => {
-      this.add.text(W / 2, H * 0.54, 'The crystals glow once more...', {
+      const sub = this.add.text(W / 2, H * 0.54, 'The crystals glow once more...', {
         fontSize: '7px', color: '#aaddff', fontFamily: 'monospace',
       }).setOrigin(0.5).setScrollFactor(0).setDepth(301).setAlpha(0);
-      this.tweens.add({ targets: this.add.text(W / 2, H * 0.54, 'The crystals glow once more...', {
-        fontSize: '7px', color: '#aaddff', fontFamily: 'monospace',
-      }).setOrigin(0.5).setScrollFactor(0).setDepth(301), alpha: 1, duration: 600 });
+      this.tweens.add({ targets: sub, alpha: 1, duration: 600 });
     });
   }
 }

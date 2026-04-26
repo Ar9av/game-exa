@@ -2,7 +2,19 @@
 
 A pluggable skill pack that lets any coding agent (Claude Code, Cursor, Antigravity, Cline, Aider, …) turn a one-line description into a runnable Phaser 3 game.
 
-Nine cooperating skills — `gameforge` (orchestrator), `game-designer`, `world-architect`, `sprite-artist`, `tile-artist`, `bg-artist`, `codesmith`, `playtester`, `refiner` — coordinate a deterministic-where-possible / LLM-where-necessary pipeline that produces a Game Design Document, tile-based levels, sprite sheets, tilesets, parallax backgrounds, gameplay code, and a headless QA loop with screenshot regression.
+Eleven cooperating skills — `gameforge` (orchestrator), `game-designer`, `world-architect`, `sprite-artist`, `tile-artist`, `bg-artist`, `codesmith`, `playtester`, `refiner`, `gap-checker`, `level-fixer` — coordinate a deterministic-where-possible / LLM-where-necessary pipeline that produces a Game Design Document, tile-based levels, sprite sheets, tilesets, parallax backgrounds, gameplay code, a headless QA loop with screenshot regression, and a **playability validation pass** that finds and fixes unreachable goals, border holes, and jump-arc gaps.
+
+## Example games
+
+Five games generated and validated by the pipeline (screenshots taken live from headless Chromium):
+
+| Game | Genre | Screenshot |
+|------|-------|-----------|
+| **Pixel Pete** — A jumpy hero collecting coins through floating platforms | Platformer | ![pixel-pete](docs/screenshots/pixel-pete.png) |
+| **Neon Runner** — A neon-clad runner collects data chips while avoiding security drones | Platformer | ![neon-runner](docs/screenshots/neon-runner.png) |
+| **Slime Slayer** — A pixel knight collects gems while dodging slimes | Top-down adventure | ![slime-slayer](docs/screenshots/slime-slayer.png) |
+| **Dungeon Quest** — A wizard battles skeleton guards to collect 3 magic orbs | Dungeon crawler | ![dungeon-quest](docs/screenshots/dungeon-quest.png) |
+| **Star Defender** — Fend off falling asteroids from your tiny ship | Shoot-em-up | ![star-defender](docs/screenshots/star-defender.png) |
 
 Image generation is powered by **GPT Image 2** (`gpt-image-2`) — OpenAI's state-of-the-art image generation model — accessible via fal.ai (default provider, requires `FAL_KEY`) or directly through the OpenAI Images API (requires `OPENAI_API_KEY`). Default `quality: low` for prototyping and framework iteration.
 
@@ -11,8 +23,10 @@ Image generation is powered by **GPT Image 2** (`gpt-image-2`) — OpenAI's stat
 ```
 description ─▶ game-designer ─▶ world-architect ─▶ sprite-artist ┐
                                                   tile-artist    ├─▶ codesmith ─▶ playtester ─▶ refiner ─▶ playtester
-                                                                  ┘                                ▲
+                                                  bg-artist      ┘                                ▲
                                                                                                    │ (max 3 retries)
+                                                                  ┌──────────────────────────────┘
+                                                  gap-checker ───▶ level-fixer / refiner (up to 3 fix iterations)
 ```
 
 - **LLM stages** (`game-designer`, `world-architect`, `codesmith`, `refiner`) are plain SKILL.md instruction docs. The host coding agent supplies the LLM reasoning.
@@ -77,6 +91,46 @@ gameforge refine
 
 Global flags: `--json` (NDJSON on stdout), `--cwd`, `-y/--yes`, `-v/--verbose`. Exit codes: `0` ok, `2` usage, `3` config, `4` network, `5` QA failed, `130` SIGINT.
 
+## Gap Checker — playability validation
+
+`playtester` checks "does it boot and respond to input." `gap-checker` checks "is the game *actually playable*" — three layers running after every generation cycle:
+
+```
+static_check.mjs  →  dynamic_check.mjs  →  (VLM visual review)  →  level-fixer / refiner
+```
+
+**Static layer** (`skills/gap-checker/scripts/static_check.mjs`): pure JS, no browser. Validates:
+- BFS reachability — every pickup/goal tile is connected to the player spawn
+- Border integrity — outer ring of the level must be impassable (sides + bottom for platformers; all sides for top-down)
+- Jump-arc gaps — platformer gaps wider than 4 tiles (≈ max horizontal jump) are flagged
+- Standable spawns — players and enemies must have ground beneath them
+- Spawn collision — two entities on the same tile
+
+**Dynamic layer** (`skills/gap-checker/scripts/dynamic_check.mjs`): 30-second smart fuzzer in headless Chromium. Catches stuck states, spawn-traps, out-of-bounds falls, and progress stalls. Saves screenshots at t=0, t=10s, t=20s, t=30s for visual review.
+
+**Gap-check results for the five example games:**
+
+| Game | Static | Dynamic |
+|------|--------|---------|
+| pixel-pete | ✅ 0 errors, 2 warnings (flying bats — expected) | ✅ boots, player moves |
+| neon-runner | ✅ 0 errors, 2 warnings (flying drones — expected) | ✅ boots, player moves |
+| slime-slayer | ✅ 0 errors, 0 warnings | ✅ fuzzer collected 1/3 gems |
+| dungeon-quest | ✅ 0 errors, 0 warnings | ✅ boots, player moves |
+| star-defender | ✅ 0 errors, 0 warnings | ✅ boots, ship moves |
+
+Fixes applied by the gap-checker pipeline on the pixel-pete example:
+- Added impassable STONE wall columns on left (x=0) and right (x=21) borders — players could previously walk off the world edge
+- Inserted a stepping-stone platform in the middle of an 8-tile sky gap (x=6→14, row 6) — previously unjumpable
+
+Run gap-checker on any generated game:
+```bash
+# Static only (fast, no browser)
+node skills/gap-checker/scripts/static_check.mjs examples/my-game
+
+# Full dynamic + screenshots (requires Playwright)
+node skills/gap-checker/scripts/dynamic_check.mjs examples/my-game --port 5199 --seconds 30
+```
+
 ## Skills
 
 Each skill has a `SKILL.md` (instructions) plus `references/` (schemas, recipes, cookbooks) and/or `scripts/` (deterministic helpers).
@@ -92,16 +146,18 @@ Each skill has a `SKILL.md` (instructions) plus `references/` (schemas, recipes,
 | `codesmith` | GDD + manifest → `src/scenes/Game.js` | — | `write_files.mjs`, `validate_code.mjs` |
 | `playtester` | Headless Playwright + pixelmatch screenshot diff | — | `run_qa.mjs`, `boot_check.mjs` |
 | `refiner` | Failures → patched files | — | `collect_files.mjs`, `apply_fixes.mjs` |
+| `gap-checker` | Playability validation: static BFS + dynamic Playwright fuzzer + VLM visual review | — | `static_check.mjs`, `dynamic_check.mjs` |
+| `level-fixer` | Gap-checker issues → patched `levels.json` | — | — |
 
 ## Validated genres
 
-| Genre | Mechanics tested | QA scenarios |
-|---|---|---|
-| Top-down adventure | 4-direction, attack, pickups, HP | boot, walk-right, walk-down, attack |
-| Platformer | Per-scene gravity, JustDown jump, blocked-down detection | boot, walk-right, jump |
-| Shoot-em-up | Projectiles, timed enemy spawn, kill-count win | boot, walk-right, walk-down, attack |
+| Genre | Example | Mechanics tested | Gap-check |
+|---|---|---|---|
+| Platformer | pixel-pete, neon-runner | Gravity, JustDown jump, blocked-down detection, wall-border containment | ✅ static + dynamic |
+| Top-down adventure | slime-slayer, dungeon-quest | 4-direction, attack hitbox, pickups, HP, BFS reachability | ✅ static + dynamic |
+| Shoot-em-up | star-defender | Projectiles, timed enemy spawn, kill-count win | ✅ static + dynamic |
 
-All three pass at 60 fps with zero console errors on a fresh clone.
+All five examples pass at 60 fps with zero console errors on a fresh clone.
 
 ## Project layout (this repo)
 

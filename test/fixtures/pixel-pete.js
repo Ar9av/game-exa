@@ -79,13 +79,26 @@ export default class Game extends Phaser.Scene {
   }
 
   create() {
-    this.physics.world.gravity.set(0, 600);
-
     const levels = this.registry.get('levels');
     const manifest = this.registry.get('manifest');
     const level = levels[this.levelIndex];
     const palette = manifest.tiles;
     const tileSize = palette.tileSize;
+    const sf = tileSize / 16;
+    this.tileSize = tileSize;
+    this.sf = sf;
+
+    this.physics.world.gravity.set(0, 600 * sf);
+
+    const worldW = level.size[0] * tileSize;
+    const worldH = level.size[1] * tileSize;
+
+    if (this.textures.exists('bg')) {
+      const bg = this.add.image(worldW / 2, worldH / 2, 'bg').setDepth(-100);
+      bg.setDisplaySize(worldW, worldH);
+      const sFactor = manifest.bg?.scrollFactor ?? 0.3;
+      bg.setScrollFactor(sFactor);
+    }
 
     const map = this.make.tilemap({ data: level.tiles, tileWidth: tileSize, tileHeight: tileSize });
     const tileset = map.addTilesetImage('tiles', 'tiles', tileSize, tileSize, 0, 0);

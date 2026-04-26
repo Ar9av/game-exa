@@ -184,9 +184,9 @@ this.tweens.add({ targets: c, scaleX: { from: 1, to: -1 }, duration: 600, yoyo: 
 this.tweens.add({ targets: c, y: c.y - 3, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 ```
 
-**Squash on jump takeoff**:
+**Squash on jump takeoff** — Y-only, never scale X (reads as Z-movement and feels wrong in 2D):
 ```js
-this.tweens.add({ targets: this.player, scaleY: 0.85, scaleX: 1.15, duration: 90, yoyo: true });
+this.tweens.add({ targets: this.player, scaleY: 0.85, duration: 80, yoyo: true });
 ```
 
 **Pickup pop + particle burst** (small rectangles spreading outward):
@@ -215,11 +215,27 @@ const t = this.add.text(cx, cy, 'YOU WIN!', { fontSize:'32px', color:'#fff7c4', 
 this.tweens.add({ targets: t, scale: 1, duration: 360, ease: 'Back.easeOut' });
 ```
 
-**Camera zoom for chunky feel**:
+**Camera zoom — usually leave at default 1.0**:
+Camera zoom > 1 amplifies any sprite scale tween into apparent Z-axis motion (the
+sprite "comes toward / away from" the screen as you tween scale). Prefer to make
+sprites look chunky by:
+1. tileSize=32 in the manifest (real tiles, not 16px tiles), and
+2. setDisplaySize(tileSize * 1.4) on entities.
+
+That gives the chunky feel without breaking 2D physics readability.
+
+**Pickup-coin "collected" guard**:
 ```js
-this.cameras.main.setZoom(2);
-this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+this.physics.add.overlap(this.player, this.coins, (_p, coin) => {
+  if (coin.collected) return;     // overlap fires every frame; only count once
+  coin.collected = true;
+  if (coin.body) coin.body.enable = false;
+  this.tweens.killTweensOf(coin); // cancel any spin/bob loops
+  // ... pop tween + counter increment + win check
+});
 ```
+This is non-negotiable — without the guard, a single graze increments the counter
+once per frame for the duration of overlap (often 5+ times), causing instant wins.
 
 **Restart on R** — bind once, scene.restart wipes state cleanly:
 ```js

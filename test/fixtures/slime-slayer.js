@@ -15,8 +15,8 @@ export const GDD = {
     ],
   },
   entities: [
-    { id: 'KNIGHT', kind: 'player', color: 'blue',  desc: 'A small blue knight with a silver sword', states: ['idle', 'walk', 'attack', 'hurt'], speed: 80, hp: 3 },
-    { id: 'SLIME',  kind: 'enemy',  color: 'green', desc: 'A round green slime with a wobble',       states: ['idle', 'walk', 'hurt'],            speed: 30, hp: 1 },
+    { id: 'KNIGHT', kind: 'player', color: 'blue',  desc: 'A small blue knight with a silver sword', states: ['idle', 'walk', 'attack'], speed: 80, hp: 3 },
+    { id: 'SLIME',  kind: 'enemy',  color: 'green', desc: 'A round green slime with a wobble',       states: ['idle', 'walk'],            speed: 30, hp: 1 },
     { id: 'GEM',    kind: 'pickup', color: 'yellow',desc: 'A bright yellow gem with sparkles',       states: ['idle'],                            speed: 0,  hp: 0 },
   ],
   tilesetPalette: [
@@ -86,6 +86,11 @@ export default class Game extends Phaser.Scene {
     const palette = manifest.tiles;
     const tileSize = palette.tileSize;
 
+    this.sf = tileSize / 16;
+    this.tileSize = tileSize;
+    const worldW = level.size[0] * tileSize;
+    const worldH = level.size[1] * tileSize;
+
     const map = this.make.tilemap({ data: level.tiles, tileWidth: tileSize, tileHeight: tileSize });
     const tileset = map.addTilesetImage('tiles', 'tiles', tileSize, tileSize, 0, 0);
     const layer = map.createLayer(0, tileset, 0, 0);
@@ -93,7 +98,8 @@ export default class Game extends Phaser.Scene {
       .map((p, i) => p ? -1 : i)
       .filter((i) => i >= 0);
     layer.setCollision(impassableIndices);
-    this.cameras.main.setBounds(0, 0, level.size[0] * tileSize, level.size[1] * tileSize);
+    this.cameras.main.setBounds(0, 0, worldW, worldH);
+    this.physics.world.setBounds(0, 0, worldW, worldH);
 
     const findSheet = (entityId) => {
       for (const s of manifest.sprites) {
@@ -117,7 +123,7 @@ export default class Game extends Phaser.Scene {
         this.player.body.setSize(this.player.width * 0.6, this.player.height * 0.6);
         this.player.body.setOffset(this.player.width * 0.2, this.player.height * 0.3);
         this.player.play(sp.entity + '-idle');
-        this.player.setDisplaySize(tileSize, tileSize);
+        this.player.setDisplaySize(tileSize * 1.4, tileSize * 1.4);
         this.player.body.setSize(tileSize * 0.7, tileSize * 0.7);
         this.player.body.setOffset(this.player.width * 0.15, this.player.height * 0.15);
       } else if (sp.entity === 'SLIME') {
@@ -131,7 +137,7 @@ export default class Game extends Phaser.Scene {
         e.setBounce(1);
         e.body.setSize(this.textures.get(sheet.tex).getSourceImage().height / 9 * 0.8, this.textures.get(sheet.tex).getSourceImage().height / 9 * 0.8);
         e.play(sp.entity + '-idle');
-        e.setDisplaySize(tileSize, tileSize);
+        e.setDisplaySize(tileSize * 1.3, tileSize * 1.3);
       } else if (sp.entity === 'GEM') {
         const g = this.gems.create(px, py, sheet.tex, sheet.rowIdx * sheet.cols);
         g.entityId = 'GEM';
@@ -153,12 +159,11 @@ export default class Game extends Phaser.Scene {
       if (this.iframes) return;
       this.iframes = true;
       this.playerHp--;
-      this.player.play('KNIGHT-hurt', true);
-      this.cameras.main.shake(120, 0.005);
-      this.time.delayedCall(500, () => {
-        this.iframes = false;
-        if (this.playerHp > 0) this.player.play('KNIGHT-idle', true);
-      });
+      this.cameras.main.shake(140, 0.008);
+      this.player.setTint(0xff5555);
+      this.tweens.add({ targets: this.player, alpha: 0.3, duration: 80, yoyo: true, repeat: 6,
+        onComplete: () => { this.player.setAlpha(1); this.player.clearTint(); } });
+      this.time.delayedCall(700, () => { this.iframes = false; });
       this.updateState();
       if (this.playerHp <= 0) this.lose();
     });
@@ -177,7 +182,7 @@ export default class Game extends Phaser.Scene {
 
   update(_time, _delta) {
     if (!this.player || this.gameOver) return;
-    const speed = 80;
+    const speed = 80 * this.sf;
     const b = this.player.body;
     b.setVelocity(0);
     const left = this.cursors.left.isDown || this.keys.A.isDown;

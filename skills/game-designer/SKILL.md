@@ -58,6 +58,7 @@ Output ONLY a single JSON object matching this schema. No prose, no fences, no c
 - Total entities: **4-9** (sprite-sheet row limit). Combine variants if needed.
 - Tileset palette: **3-6 entries**. First entry SHOULD be the dominant passable floor.
 - Every entity's `states` MUST include `"idle"`. For `kind ∈ {player, enemy, boss}`, also include `"walk"`.
+- Prefer states from this filter-safe set: `idle`, `walk`, `jump`, `cast`, `block`, `victory`. Avoid `hurt` and `attack` as dedicated sprite states — GPT Image 2's content filter trips on the typical "pained grimace / lunging / weapon extended" descriptions. For damage feedback, the codesmith uses tint flash + alpha blink + camera shake (no sprite frame needed). For attack feedback, a brief swing animation can be implemented in code.
 - `winCondition` and `loseCondition` must be testable from `window.__gameState` without human judgment.
 - For **platformer**: include gravity-friendly tiles (floor, wall) and a goal entity OR goal tile.
 - For **top-down**: orthogonal layout, walls block movement.

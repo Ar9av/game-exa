@@ -18,13 +18,22 @@ export default class Game extends Phaser.Scene {
     const level = levels[this.levelIndex];
     const palette = manifest.tiles;
     const tileSize = palette.tileSize;
+    this.sf = tileSize / 16;
+    this.tileSize = tileSize;
+
+    this.worldW = level.size[0] * tileSize;
+    this.worldH = level.size[1] * tileSize;
+
+    if (this.textures.exists('bg')) {
+      const bg = this.add.image(this.worldW / 2, this.worldH / 2, 'bg').setDepth(-100);
+      bg.setDisplaySize(this.worldW, this.worldH);
+      bg.setScrollFactor(manifest.bg?.scrollFactor ?? 0.3);
+    }
 
     const map = this.make.tilemap({ data: level.tiles, tileWidth: tileSize, tileHeight: tileSize });
     const tileset = map.addTilesetImage('tiles', 'tiles', tileSize, tileSize, 0, 0);
     map.createLayer(0, tileset, 0, 0);
 
-    this.worldW = level.size[0] * tileSize;
-    this.worldH = level.size[1] * tileSize;
     this.cameras.main.setBounds(0, 0, this.worldW, this.worldH);
     this.physics.world.setBounds(0, 0, this.worldW, this.worldH);
 
@@ -49,8 +58,9 @@ export default class Game extends Phaser.Scene {
       ps.rowIdx * ps.cols,
     );
     this.player.setCollideWorldBounds(true);
-    this.player.setDisplaySize(tileSize, tileSize);
-    this.player.body.setSize(tileSize * 0.7, tileSize * 0.7);
+    this.player.setDisplaySize(tileSize * 1.4, tileSize * 1.4);
+    this.player.body.setSize(this.player.width * 0.55, this.player.height * 0.55);
+    this.player.body.setOffset(this.player.width * 0.225, this.player.height * 0.225);
     this.player.play('SHIP-idle');
 
     this.physics.add.overlap(this.bullets, this.asteroids, (bullet, asteroid) => {
@@ -66,12 +76,11 @@ export default class Game extends Phaser.Scene {
       this.iframes = true;
       this.playerHp--;
       asteroid.destroy();
-      this.player.play('SHIP-hurt', true);
-      this.cameras.main.shake(120, 0.005);
-      this.time.delayedCall(500, () => {
-        this.iframes = false;
-        if (this.playerHp > 0) this.player.play('SHIP-idle', true);
-      });
+      this.cameras.main.shake(140, 0.008);
+      this.player.setTint(0xff5555);
+      this.tweens.add({ targets: this.player, alpha: 0.3, duration: 80, yoyo: true, repeat: 6,
+        onComplete: () => { this.player.setAlpha(1); this.player.clearTint(); } });
+      this.time.delayedCall(700, () => { this.iframes = false; });
       this.updateState();
       if (this.playerHp <= 0) this.lose();
     });
@@ -90,9 +99,10 @@ export default class Game extends Phaser.Scene {
     if (!sheet) return;
     const x = Phaser.Math.Between(tileSize, this.worldW - tileSize);
     const a = this.asteroids.create(x, -tileSize, sheet.tex, sheet.rowIdx * sheet.cols);
-    a.setDisplaySize(tileSize, tileSize);
-    a.body.setSize(tileSize * 0.7, tileSize * 0.7);
-    a.body.setVelocityY(60);
+    a.setDisplaySize(tileSize * 1.3, tileSize * 1.3);
+    a.body.setSize(a.width * 0.55, a.height * 0.55);
+    a.body.setOffset(a.width * 0.225, a.height * 0.225);
+    a.body.setVelocityY(60 * this.sf);
     a.play('ASTEROID-idle');
   }
 
@@ -101,15 +111,16 @@ export default class Game extends Phaser.Scene {
     const sheet = this.findSheet('BULLET');
     if (!sheet) return;
     const b = this.bullets.create(this.player.x, this.player.y - tileSize / 2, sheet.tex, sheet.rowIdx * sheet.cols);
-    b.setDisplaySize(tileSize / 2, tileSize / 2);
-    b.body.setSize(tileSize * 0.4, tileSize * 0.4);
-    b.body.setVelocityY(-300);
+    b.setDisplaySize(tileSize * 0.6, tileSize * 0.6);
+    b.body.setSize(b.width * 0.5, b.height * 0.5);
+    b.body.setOffset(b.width * 0.25, b.height * 0.25);
+    b.body.setVelocityY(-300 * this.sf);
     b.play('BULLET-idle');
   }
 
   update(time) {
     if (!this.player || this.gameOver) return;
-    const speed = 140;
+    const speed = 140 * this.sf;
     const b = this.player.body;
     b.setVelocity(0);
     const left = this.cursors.left.isDown || this.keys.A.isDown;

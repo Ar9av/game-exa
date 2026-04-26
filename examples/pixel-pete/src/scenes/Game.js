@@ -125,7 +125,8 @@ export default class Game extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE,R');
 
-    this.cameras.main.setZoom(2);
+    // No camera zoom — tileSize=32 already gives chunky feel. Zooming
+    // makes scale tweens read as Z-axis movement, which is wrong for 2D.
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
     this.cameras.main.roundPixels = true;
     this.cameras.main.fadeIn(400, 0, 0, 0);
@@ -228,8 +229,8 @@ export default class Game extends Phaser.Scene {
 
     if (jumpPressed && b.blocked.down) {
       b.setVelocityY(-330 * this.sf);
-      // Squash on takeoff
-      this.tweens.add({ targets: this.player, scaleY: 0.85, scaleX: 1.15, duration: 90, yoyo: true });
+      // Y-only squash on takeoff — never scale X (reads as Z movement at any camera zoom).
+      this.tweens.add({ targets: this.player, scaleY: 0.85, duration: 80, yoyo: true });
     }
 
     if (!this.iframes) {

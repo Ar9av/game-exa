@@ -14,7 +14,7 @@ if (!state.gdd || !state.levels?.length) {
 const palette = state.gdd.tilesetPalette;
 const playerEntity = state.gdd.entities.find((e) => e.kind === 'player');
 const isPlatformer = state.gdd.genre === 'platformer';
-const isTopDown = state.gdd.genre === 'top-down-adventure' || state.gdd.genre === 'dungeon-crawler';
+const isTopDown = state.gdd.genre === 'top-down-adventure' || state.gdd.genre === 'dungeon-crawler' || state.gdd.genre === 'top-down-rpg';
 
 // Approximate max horizontal jump distance in tiles.
 // Default Phaser arcade: jump v=330, g=600, hSpeed=120; tileSize=32 with sf=2.

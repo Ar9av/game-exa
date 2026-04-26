@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "name": "crystal-village",
+  "prompt": "An RPG hero explores a magical crystal village, talks to villagers, and collects 5 scattered crystals to lift the curse.",
+  "genre": "top-down-rpg",
+  "createdAt": "2026-04-26T12:00:00.000Z",
+  "gdd": {
+    "title": "Crystal Village",
+    "genre": "top-down-rpg",
+    "tagline": "Restore the village by gathering 5 ancient crystals.",
+    "loop": "Walk the village, talk to NPCs for hints, collect 5 crystals scattered across the map.",
+    "winCondition": "window.__gameState.crystalsCollected >= 5",
+    "loseCondition": "none",
+    "controls": {
+      "movement": "4-direction",
+      "actions": [
+        { "key": "Z",     "name": "interact", "description": "Talk to nearby NPC or advance dialogue" },
+        { "key": "SPACE", "name": "interact", "description": "Same as Z" }
+      ]
+    },
+    "entities": [
+      { "id": "HERO",     "kind": "player", "color": "blue",   "desc": "Small hero in a blue tunic", "states": ["idle","walk"], "speed": 80, "hp": 0 },
+      { "id": "ELDER",    "kind": "npc",    "color": "purple", "desc": "Elder with a purple robe and white beard", "states": ["idle","walk"], "speed": 0, "hp": 0 },
+      { "id": "VILLAGER", "kind": "npc",    "color": "orange", "desc": "Friendly villager in orange clothing", "states": ["idle","walk"], "speed": 0, "hp": 0 },
+      { "id": "GUARD",    "kind": "npc",    "color": "red",    "desc": "Guard in red armor", "states": ["idle","walk"], "speed": 0, "hp": 0 },
+      { "id": "CRYSTAL",  "kind": "pickup", "color": "cyan",   "desc": "Shimmering crystal shard", "states": ["idle","walk"], "speed": 0, "hp": 0 }
+    ],
+    "tilesetPalette": [
+      { "id": "GRASS",      "color": "#3a8a3a", "passable": true  },
+      { "id": "PATH",       "color": "#c4a05a", "passable": true  },
+      { "id": "WATER",      "color": "#3a6bc4", "passable": false },
+      { "id": "STONE_WALL", "color": "#5e5e6e", "passable": false },
+      { "id": "FLOWER",     "color": "#3a8a3a", "passable": true  },
+      { "id": "TREE",       "color": "#1e5e1e", "passable": false }
+    ],
+    "levelHints": {
+      "size": [20, 16],
+      "count": 1,
+      "themes": ["village"]
+    }
+  },
+  "levels": [
+    {
+      "id": "village",
+      "theme": "village",
+      "size": [20, 16],
+      "tiles": [
+        [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3],
+        [3,0,0,5,5,0,0,4,4,0,0,4,4,0,0,5,5,0,0,3],
+        [3,0,0,5,5,0,0,0,0,0,0,0,0,0,0,5,5,0,0,3],
+        [3,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,3],
+        [3,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,3],
+        [3,0,5,5,0,1,0,0,0,0,0,0,0,0,1,0,5,5,0,3],
+        [3,0,5,5,0,1,0,0,2,2,2,2,0,0,1,0,5,5,0,3],
+        [3,0,0,0,0,1,0,0,2,2,2,2,0,0,1,0,0,0,0,3],
+        [3,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,3],
+        [3,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,3],
+        [3,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,3],
+        [3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
+        [3,0,4,4,0,0,0,0,0,0,0,0,0,0,0,0,4,4,0,3],
+        [3,0,4,0,0,0,5,5,0,0,0,0,5,5,0,0,0,4,0,3],
+        [3,0,0,0,0,0,5,5,0,0,0,0,5,5,0,0,0,0,0,3],
+        [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
+      ],
+      "spawns": [
+        { "entity": "HERO",     "x": 7,  "y": 8  },
+        { "entity": "ELDER",    "x": 9,  "y": 4  },
+        { "entity": "VILLAGER", "x": 6,  "y": 6  },
+        { "entity": "GUARD",    "x": 12, "y": 8  },
+        { "entity": "CRYSTAL",  "x": 2,  "y": 1  },
+        { "entity": "CRYSTAL",  "x": 17, "y": 1  },
+        { "entity": "CRYSTAL",  "x": 1,  "y": 12 },
+        { "entity": "CRYSTAL",  "x": 18, "y": 12 },
+        { "entity": "CRYSTAL",  "x": 9,  "y": 11 }
+      ],
+      "goal": { "kind": "collect-all" }
+    }
+  ],
+  "assets": {
+    "sprites": [
+      {
+        "relSheet":   "assets/entities.png",
+        "rows":       ["HERO", "ELDER", "VILLAGER", "GUARD", "CRYSTAL"],
+        "cols":       ["idle", "walk"],
+        "cell":       32,
+        "bg":         "transparent",
+        "textureKey": "entities-1"
+      }
+    ],
+    "tiles": {
+      "relSheet": "assets/tiles.png",
+      "tileSize": 32,
+      "ids":      ["GRASS", "PATH", "WATER", "STONE_WALL", "FLOWER", "TREE"],
+      "passable": [true,    true,   false,   false,        true,     false]
+    },
+    "bg": null
+  },
+  "code": {
+    "entryPoint": "src/main.js",
+    "scenes": ["Boot", "Preload", "Game"]
+  },
+  "qa": []
+}

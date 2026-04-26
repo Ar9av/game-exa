@@ -10,6 +10,7 @@ All screenshots taken live from headless Chromium via the gap-checker dynamic la
 
 | Game | Genre | Screenshot |
 |------|-------|-----------|
+| **Crystal Village** — RPG hero explores a magical village, chats with NPCs, collects 5 glowing crystals | RPG Overworld | ![crystal-village](docs/screenshots/crystal-village.png) |
 | **Pixel Pete** — Jumpy hero collecting coins through floating platforms | Platformer | ![pixel-pete](docs/screenshots/pixel-pete.png) |
 | **Void Breaker** — Geometry Wars-style arena shooter; survive 10 neon waves | Arena shooter | ![void-breaker](docs/screenshots/void-breaker.png) |
 | **Slime Slayer** — Pixel knight collecting gems while dodging slimes | Top-down adventure | ![slime-slayer](docs/screenshots/slime-slayer.png) |
@@ -99,6 +100,7 @@ static_check.mjs  →  dynamic_check.mjs  →  (VLM visual review)  →  level-f
 
 | Game | Static | Dynamic |
 |------|--------|---------|
+| crystal-village | ✅ 0 errors | ✅ boots, player moves, crystals glow |
 | pixel-pete | ✅ 0 errors | ✅ boots, player moves |
 | void-breaker | ✅ 0 errors | ✅ boots, enemies spawn |
 | slime-slayer | ✅ 0 errors | ✅ fuzzer collected gems |
@@ -131,11 +133,13 @@ node skills/gap-checker/scripts/dynamic_check.mjs examples/my-game --port 5199 -
 | `refiner` | Failures → patched files | — | `collect_files.mjs`, `apply_fixes.mjs` |
 | `gap-checker` | Playability validation: static BFS + dynamic fuzzer + VLM review | — | `static_check.mjs`, `dynamic_check.mjs` |
 | `level-fixer` | Gap-checker issues → patched `levels.json` | — | — |
+| `rpg-overworld` | RPG-specific patterns: NPC dialogue, y-sort, quest pickups, camera follow | — | `references/rpg-recipes.md` |
 
 ## Validated genres
 
 | Genre | Examples | Mechanics |
 |---|---|---|
+| RPG Overworld | crystal-village | 4-direction walk, NPC proximity dialogue, typewriter text, y-sort depth, crystal glow/burst, collect-all quest |
 | Platformer | pixel-pete | Gravity, JustDown jump, blocked-down detection, wall-border containment |
 | Arena shooter | void-breaker | Spawn waves, enemy AI, particle explosions, multiplier combo, bombs |
 | Top-down adventure | slime-slayer | 4-direction, attack hitbox, pickups, HP, BFS reachability |
@@ -167,9 +171,15 @@ gamewright/
 │   ├── playtester/
 │   ├── refiner/
 │   ├── gap-checker/
-│   └── level-fixer/
+│   ├── level-fixer/
+│   └── rpg-overworld/      # RPG overworld patterns + recipes
 ├── templates/phaser-game/  # per-game Phaser 3 + Vite starter
 ├── examples/               # generated sample games
+│   ├── crystal-village/    # RPG overworld with NPC dialogue
+│   ├── pixel-pete/         # platformer
+│   ├── void-breaker/       # arena shooter (pure-code visuals, no assets)
+│   ├── slime-slayer/       # top-down adventure
+│   └── star-defender/      # shoot-em-up
 ├── docs/
 │   ├── screenshots/        # live headless-Chromium screenshots
 │   ├── architecture.md

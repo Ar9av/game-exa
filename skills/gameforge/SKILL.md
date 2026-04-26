@@ -45,7 +45,7 @@ Single source of truth at the project root. Every sub-skill reads/writes it. Sch
   "version": 1,
   "name": "<project-name>",
   "prompt": "<original user description>",
-  "genre": "top-down-adventure | platformer | shoot-em-up | puzzle | dungeon-crawler",
+  "genre": "top-down-adventure | platformer | shoot-em-up | puzzle | dungeon-crawler | top-down-rpg",
   "createdAt": "<ISO timestamp>",
   "gdd":     <output from game-designer or null>,
   "levels":  [<output from world-architect>],

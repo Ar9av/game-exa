@@ -21,7 +21,7 @@ Output ONLY a single JSON object matching this schema. No prose, no fences, no c
 ```jsonc
 {
   "title": "<short game title (1-4 words)>",
-  "genre": "top-down-adventure" | "platformer" | "twin-stick-shooter" | "puzzle" | "shoot-em-up" | "dungeon-crawler",
+  "genre": "top-down-adventure" | "platformer" | "twin-stick-shooter" | "puzzle" | "shoot-em-up" | "dungeon-crawler" | "top-down-rpg",
   "tagline": "<one-sentence pitch>",
   "loop":   "<1-3 sentences describing the core gameplay loop>",
   "winCondition":  "<concrete, observable in headless test, e.g. 'window.__gameState.gemsCollected >= 3'>",

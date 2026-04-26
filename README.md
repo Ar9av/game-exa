@@ -15,6 +15,7 @@ All screenshots taken live from headless Chromium via the gap-checker dynamic la
 | **Void Breaker** — Geometry Wars-style arena shooter; survive 10 neon waves | Arena shooter | ![void-breaker](docs/screenshots/void-breaker.png) |
 | **Slime Slayer** — Pixel knight collecting gems while dodging slimes | Top-down adventure | ![slime-slayer](docs/screenshots/slime-slayer.png) |
 | **Star Defender** — Fend off falling asteroids from your tiny ship | Shoot-em-up | ![star-defender](docs/screenshots/star-defender.png) |
+| **Street Brawler** — Muscular brawler fights through waves of street thugs and a final boss | Beat-em-up | ![street-brawler](docs/screenshots/street-brawler.png) |
 
 ## How it works
 
@@ -146,7 +147,7 @@ node skills/gap-checker/scripts/dynamic_check.mjs examples/my-game --port 5199 -
 | Arena shooter | void-breaker | Spawn waves, enemy AI, particle explosions, multiplier combo, bombs |
 | Top-down adventure | slime-slayer | 4-direction, attack hitbox, pickups, HP, BFS reachability |
 | Shoot-em-up | star-defender | Projectiles, timed enemy spawn, kill-count win condition |
-| Beat-em-up | *(see skills/beat-em-up)* | Pseudo-3D Y-depth, 4-dir brawler, y-sort, one-way camera scroll, HP bar HUD, enemy wave spawner |
+| Beat-em-up | street-brawler | Pseudo-3D Y-depth, 4-dir brawler, y-sort, one-way camera scroll, HP bar HUD, enemy wave spawner |
 | Action-platformer | *(see skills/action-platformer)* | Gravity+coyote-time jump, spike hazard tiles, sword attack, HP gem HUD, dungeon parallax bg |
 
 ## Project layout (this repo)
@@ -185,7 +186,8 @@ gamewright/
 │   ├── pixel-pete/         # platformer
 │   ├── void-breaker/       # arena shooter (pure-code visuals, no assets)
 │   ├── slime-slayer/       # top-down adventure
-│   └── star-defender/      # shoot-em-up
+│   ├── star-defender/      # shoot-em-up
+│   └── street-brawler/    # beat-em-up with pseudo-3D, boss fight
 ├── docs/
 │   ├── screenshots/        # live headless-Chromium screenshots
 │   ├── architecture.md

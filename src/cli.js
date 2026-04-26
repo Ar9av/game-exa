@@ -7,8 +7,8 @@ export async function run(argv) {
 
   const program = new Command();
   program
-    .name('gameforge')
-    .description('Agent-driven framework for generating runnable Phaser 3 games.')
+    .name('gamewright')
+    .description('game-exa — agent-driven framework for generating runnable Phaser 3 games.')
     .version('0.1.0')
     .option('--json', 'machine-readable NDJSON output on stdout')
     .option('--cwd <path>', 'working directory', process.cwd())

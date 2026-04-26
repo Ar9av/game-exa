@@ -12,7 +12,7 @@ export const GAME_CONFIG = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  seed: ['gameforge'],
+  seed: ['game-exa'],
   physics: {
     default: 'arcade',
     arcade: { gravity: { x: 0, y: 0 }, debug: false },

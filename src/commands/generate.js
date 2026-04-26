@@ -112,7 +112,7 @@ export async function generateCommand(description, opts, ctx) {
   log.result({ title: gdd.title, genre: gdd.genre, files: files.map((f) => f.path) });
   if (!ctx.json) {
     log.success(`generated ${gdd.title} (${gdd.genre})`);
-    log.info('next: gameforge dev   # then open the URL — or: gameforge qa');
+    log.info('next: gamewright dev   # then open the URL — or: gamewright qa');
   }
 }
 

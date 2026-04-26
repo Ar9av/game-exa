@@ -49,6 +49,6 @@ export async function initCommand(name, opts, ctx) {
   log.result({ projectDir });
   if (!ctx.json) {
     log.success(`scaffolded ${projectName} at ${projectDir}`);
-    log.info(`next: cd ${basename(projectDir)} && gameforge generate "your idea"`);
+    log.info(`next: cd ${basename(projectDir)} && gamewright generate "your idea"`);
   }
 }

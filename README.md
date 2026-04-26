@@ -1,8 +1,8 @@
-# gamewright
+# game-exa
 
 An AI agent skill pack — give any coding agent a one-line prompt and get a complete, gap-checked, playable **Phaser 3** game back. Zero boilerplate, zero hallucinated physics, gap-checker validates every level before calling it done.
 
-> Previously called *gameforge*. The CLI binary `gamewright` is available alongside the old `gameforge` alias.
+> CLI binary: `gamewright`. Legacy alias `gameforge` also works.
 
 ## Example games
 
@@ -35,13 +35,13 @@ description ─▶ game-designer ─▶ world-architect ─▶ sprite-artist ┐
 ## Install
 
 ```bash
-git clone https://github.com/Ar9av/gameforge.git ~/gamewright
-cd ~/gamewright
+git clone https://github.com/Ar9av/game-exa.git ~/game-exa
+cd ~/game-exa
 npm install
 
 # Symlink skills into your host's skill directory (Claude Code, Cursor, etc.)
 mkdir -p ~/.claude/skills
-ln -sf ~/gamewright/skills/* ~/.claude/skills/
+ln -sf ~/game-exa/skills/* ~/.claude/skills/
 
 # (Optional) Install Playwright's Chromium if you don't have system Chrome
 npx playwright install chromium
@@ -153,7 +153,7 @@ gamewright/
 ├── package.json
 ├── bin/
 │   ├── gamewright.mjs      # CLI (primary)
-│   └── gameforge.mjs       # legacy alias
+│   └── gameforge.mjs       # legacy alias (gameforge → gamewright)
 ├── src/                    # CLI implementation + shared lib
 │   ├── cli.js
 │   ├── commands/           # init, generate, qa, refine, dev, build

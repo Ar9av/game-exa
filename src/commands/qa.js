@@ -6,7 +6,7 @@ import { CliError, EX } from '../lib/errors.js';
 export async function qaCommand(opts, ctx) {
   const log = ctx.log;
   const state = await loadState(ctx.cwd);
-  if (!state.gdd) throw new CliError('No GDD in state — run `gameforge generate "..."` first.', EX.CONFIG);
+  if (!state.gdd) throw new CliError('No GDD in state — run `gamewright generate "..."` first.', EX.CONFIG);
 
   let url = opts.url;
   let server;

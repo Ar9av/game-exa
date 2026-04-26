@@ -24,7 +24,7 @@ export function emptyState({ name, prompt, genre } = {}) {
 export async function loadState(projectDir) {
   const file = resolve(projectDir, STATE_FILE);
   if (!existsSync(file)) {
-    throw new CliError(`No game-state.json in ${projectDir}. Run 'gameforge init' first.`, EX.CONFIG);
+    throw new CliError(`No game-state.json in ${projectDir}. Run 'gamewright init' first.`, EX.CONFIG);
   }
   const raw = await readFile(file, 'utf8');
   const state = JSON.parse(raw);

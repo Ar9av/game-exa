@@ -1,6 +1,6 @@
 # Coding-agent integration
 
-Two ways to run gameforge: **host-agent mode** (read SKILL.md, drive the pipeline) and **embedded CLI mode** (the bundled `gameforge` command does the LLM calls itself).
+Two ways to run **game-exa**: **host-agent mode** (read SKILL.md, drive the pipeline) and **embedded CLI mode** (the bundled `gamewright` command does the LLM calls itself).
 
 ## Host-agent mode (recommended)
 
@@ -9,10 +9,10 @@ Works with any agent that supports skills/instructions: Claude Code, Cursor, Ant
 ### Install
 
 ```bash
-git clone https://github.com/Ar9av/gameforge.git ~/gameforge
-cd ~/gameforge && npm install
+git clone https://github.com/Ar9av/game-exa.git ~/game-exa
+cd ~/game-exa && npm install
 mkdir -p ~/.claude/skills            # or ~/.cursor/skills, ~/.cline/skills, etc.
-ln -sf ~/gameforge/skills/* ~/.claude/skills/
+ln -sf ~/game-exa/skills/* ~/.claude/skills/
 ```
 
 ### Trigger
@@ -23,7 +23,7 @@ The agent loads `skills/gameforge/SKILL.md`, follows the pipeline, and runs dete
 
 | Stage | Action the host takes |
 |---|---|
-| init | Run `node ~/gameforge/skills/gameforge/scripts/init_project.mjs <name>` |
+| init | Run `node ~/game-exa/skills/gameforge/scripts/init_project.mjs <name>` |
 | game-designer | Read `skills/game-designer/SKILL.md` + `references/gdd-schema.json`. Produce GDD via own LLM. Validate with `validate_gdd.mjs`. Write to `game-state.json`. |
 | world-architect | Read `skills/world-architect/SKILL.md`. Produce levels. Validate. Write to state. |
 | sprite-artist | Run `node skills/sprite-artist/scripts/generate_sheets.mjs <project> [--placeholder]`. |
@@ -44,11 +44,11 @@ For users who want to invoke the pipeline without an agent in the loop:
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
-gameforge init my-game
+gamewright init my-game
 cd my-game
-gameforge generate "<description>"
-gameforge qa
-gameforge refine
+gamewright generate "<description>"
+gamewright qa
+gamewright refine
 ```
 
 This calls Claude (Anthropic SDK) directly. The system prompts come from `src/agents/*.js`, which mirror the SKILL.md files. Same pipeline, same deterministic helpers — just batched into one process.
@@ -58,7 +58,7 @@ This calls Claude (Anthropic SDK) directly. The system prompts come from `src/ag
 Both modes can emit a structured event stream:
 
 ```bash
-gameforge --json generate "..."
+gamewright --json generate "..."
 ```
 
 Each line is a `{ event, ts, data }` object. Useful for:
@@ -85,18 +85,18 @@ Events:
 
 ## Config
 
-User-level config lives at `$XDG_CONFIG_HOME/gameforge/config.json` (or `~/.config/gameforge/config.json`). Loaded by `cosmiconfig` — also picks up `gameforge.config.{js,ts,json}` in the project root, or a `"gameforge"` key in the project's `package.json`.
+User-level config lives at `$XDG_CONFIG_HOME/game-exa/config.json` (or `~/.config/game-exa/config.json`). Loaded by `cosmiconfig` — also picks up `game-exa.config.{js,ts,json}` in the project root.
 
 ## Verifying the install
 
 ```bash
 # 1. Smoke check the template + harness
-node ~/gameforge/test/smoke-boot.mjs
+node ~/game-exa/test/smoke-boot.mjs
 
 # 2. Run all three genre fixtures end-to-end (deterministic, no LLM)
-node ~/gameforge/test/run-fixture.mjs slime-slayer 5180
-node ~/gameforge/test/run-fixture.mjs pixel-pete   5181
-node ~/gameforge/test/run-fixture.mjs star-defender 5182
+node ~/game-exa/test/run-fixture.mjs slime-slayer 5180
+node ~/game-exa/test/run-fixture.mjs pixel-pete   5181
+node ~/game-exa/test/run-fixture.mjs star-defender 5182
 ```
 
 All should print `"failures": []` and exit `0`.

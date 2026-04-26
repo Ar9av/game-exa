@@ -9,8 +9,8 @@ import { qaCommand } from './qa.js';
 export async function refineCommand(opts, ctx) {
   const log = ctx.log;
   const state = await loadState(ctx.cwd);
-  if (!state.gdd) throw new CliError('No GDD in state — run `gameforge generate` first.', EX.CONFIG);
-  if (!state.qa?.length) throw new CliError('No QA report — run `gameforge qa` first.', EX.CONFIG);
+  if (!state.gdd) throw new CliError('No GDD in state — run `gamewright generate` first.', EX.CONFIG);
+  if (!state.qa?.length) throw new CliError('No QA report — run `gamewright qa` first.', EX.CONFIG);
 
   const lastQA = state.qa[state.qa.length - 1];
   if (lastQA.passed && !opts.force) {

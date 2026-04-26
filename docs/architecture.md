@@ -1,4 +1,4 @@
-# gameforge architecture
+# game-exa architecture
 
 ## Design principles
 

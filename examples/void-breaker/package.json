@@ -1,0 +1,12 @@
+{
+  "name": "void-breaker",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite --port 5175",
+    "build": "vite build"
+  },
+  "dependencies": { "phaser": "^3.85.2" },
+  "devDependencies": { "vite": "^5.4.10" }
+}

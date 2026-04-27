@@ -27,13 +27,50 @@ npm run dev              # opens http://127.0.0.1:5173
 
 ## Engine architecture
 
-The engine is a fully automated pipeline. Each stage is a specialized system — some powered by LLMs, some by image generation, some deterministic scripts:
+The engine is a fully automated pipeline. Each stage is a specialized system — some powered by LLMs, some by image generation, some deterministic scripts. State flows through `game-state.json` at every step.
 
-```
-description ─▶ game-designer ─▶ world-architect ─▶ sprite-artist ┐
-                                                  tile-artist    ├─▶ codesmith ─▶ playtester ─▶ refiner ─▶ playtester
-                                                  bg-artist      ┘                                ▲
-                                                                                                   │ (max 3 retries)
+```mermaid
+flowchart TD
+    INPUT([📝 your description]):::io --> GD
+
+    subgraph DESIGN["  Design  "]
+        GD["**game-designer**\nGDD JSON — entities, mechanics,\nwin condition, camera, HUD"]
+        WA["**world-architect**\nTile-based level layouts\nspawns · hazards · collectibles"]
+        GD --> WA
+    end
+
+    subgraph ASSETS["  Asset Generation  ·  GPT Image 2  "]
+        SA["**sprite-artist**\nPixel-art sprite sheets\nwalk · idle · attack frames"]
+        TA["**tile-artist**\nEnvironment tileset PNG"]
+        BA["**bg-artist**\nMulti-layer parallax background"]
+    end
+
+    WA --> SA & TA & BA
+
+    subgraph CODE["  Code Generation  "]
+        CS["**codesmith**\nComplete Game.js — physics, AI,\nHUD, win/lose, all mechanics"]
+    end
+
+    SA & TA & BA --> CS
+
+    subgraph QA["  Quality Assurance  "]
+        PT["**playtester**\nHeadless Playwright · pixelmatch\nVLM intent alignment check"]
+        GC["**gap-checker**\nBFS reachability + input fuzzer\nFails if level is unwinnable"]
+        RF["**refiner**\nReads failures · patches files\nmax 3 retries"]
+        PT -->|fail| RF
+        GC -->|fail| RF
+        RF -->|retry| PT
+    end
+
+    CS --> PT
+    PT -->|pass| GC
+
+    GC -->|pass| OUTPUT
+
+    OUTPUT([🎮 complete game\nPhaser 3 · Vite · full source]):::io
+
+    classDef io fill:#1a1a2e,stroke:#00f5ff,color:#00f5ff,font-weight:bold
+    classDef default fill:#0f0f23,stroke:#444,color:#ccc
 ```
 
 | System | What it does |
@@ -44,12 +81,12 @@ description ─▶ game-designer ─▶ world-architect ─▶ sprite-artist ┐
 | **tile-artist** | Environment palette → GPT Image 2 tileset PNG |
 | **bg-artist** | Genre + mood → multi-layer parallax background PNG |
 | **codesmith** | GDD + asset manifest → complete `src/scenes/Game.js` with physics, AI, HUD, win/lose flow |
-| **playtester** | Headless Playwright boots the game, captures screenshots, runs pixelmatch diff to detect blank screens or regressions |
-| **gap-checker** | Playability validation: static BFS reachability analysis + dynamic input fuzzer. Fails the build if the level is unwinnable. |
+| **playtester** | Headless Playwright boots the game, captures screenshots, pixelmatch diff, VLM intent scoring |
+| **gap-checker** | Playability validation: static BFS reachability + dynamic input fuzzer. Fails build if level is unwinnable. |
 | **refiner** | Reads playtester/gap-checker failures, patches the broken file, hands back to playtester (max 3 retries) |
 | **multiplayer** | Generates a Colyseus WebSocket server + patches Game.js for real-time sync. Optional. |
 
-State is carried in `game-state.json` across every stage. The engine runs inside any LLM coding agent (Claude Code, Cursor, etc.) that can read SKILL.md files — no separate Anthropic API key required.
+The engine runs inside any LLM coding agent (Claude Code, Cursor, etc.) that can read SKILL.md files — no separate API key required beyond what your agent already uses.
 
 ## Supported genres
 

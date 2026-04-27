@@ -434,6 +434,142 @@ function makeSewerBotLevels() {
   }];
 }
 
+// ─── pixel-town (Pokemon-style top-down RPG overworld) ───────────────────────
+
+const PIXEL_TOWN_GDD = {
+  title: 'Pixel Town',
+  genre: 'top-down-rpg',
+  tagline: 'A charming Pokemon-inspired town: explore the streets, chat with locals, and uncover all five hidden treasure chests',
+  loop: 'Walk around a pixel-art town, discover hidden treasure chests, and talk to villagers. Collect all 5 chests to win.',
+  winCondition: 'window.__gameState.chestsFound >= 5',
+  loseCondition: 'false',
+  controls: {
+    movement: 'top-down',
+    actions: [
+      { key: 'SPACE', name: 'Talk / Interact', description: 'Talk to nearby NPC or pick up item' },
+    ],
+  },
+  entities: [
+    {
+      id: 'TRAINER', kind: 'player',
+      color: 'red cap white shirt blue shorts',
+      desc: 'Young Pokemon-style trainer boy: red baseball cap, short brown hair, white t-shirt, blue shorts, red-and-white sneakers, cheerful face',
+      states: ['idle', 'walk'], speed: 90, hp: 0,
+    },
+    {
+      id: 'NPC_GIRL', kind: 'npc',
+      color: 'pink dress brown pigtails',
+      desc: 'Young girl NPC, Pokemon-style: pink dress, brown hair in pigtails, friendly face, simple pixel art sprite',
+      states: ['idle', 'walk'], speed: 28, hp: 0,
+    },
+    {
+      id: 'NPC_BOY', kind: 'npc',
+      color: 'blue shirt dark hair',
+      desc: 'Young boy NPC, Pokemon-style: blue shirt, dark hair, simple cheerful face, pixel art sprite',
+      states: ['idle', 'walk'], speed: 32, hp: 0,
+    },
+    {
+      id: 'NPC_ELDER', kind: 'npc',
+      color: 'gray robe white hair',
+      desc: 'Elderly NPC, Pokemon-style: gray robe, white hair, kind wrinkled face, wooden walking staff, pixel art sprite',
+      states: ['idle', 'walk'], speed: 18, hp: 0,
+    },
+    {
+      id: 'CHEST', kind: 'pickup',
+      color: 'pink treasure box',
+      desc: 'Small glowing pink treasure chest with golden clasp and sparkle effect, Pokemon item-ball style, pixel art',
+      states: ['idle'], speed: 0, hp: 0,
+    },
+  ],
+  tilesetPalette: [
+    { id: 'GRASS',  color: '#78C878', passable: true,  desc: 'Pokemon GBA Ruby/Sapphire style lush light mint-green grass tile, subtle diagonal crosshatch line texture, bright cheerful ground, seamlessly tileable, viewed from above' },
+    { id: 'PATH',   color: '#D8C898', passable: true,  desc: 'Pokemon GBA style sandy cream dirt path tile, small dotted speckle stipple texture, warm light beige ground, worn footpath, seamlessly tileable, top-down' },
+    { id: 'TREE',   color: '#386028', passable: false, desc: 'Pokemon GBA Ruby/Sapphire style single round bushy tree viewed from above, circular dark-green canopy ball with lighter highlight on top, thin darker outline, top-down aerial view, one tree per tile' },
+    { id: 'FLOWER', color: '#E87878', passable: true,  desc: 'Pokemon GBA style small flower patch tile, tiny red and pink wildflowers with green stems on bright grass, cheerful garden decoration, top-down view, pastel colors' },
+    { id: 'WALL',   color: '#D8C8A0', passable: false, desc: 'Pokemon GBA style Japanese house exterior wall tile, cream plaster wall section with small shuttered window detail, traditional architecture, viewed from slightly elevated angle' },
+    { id: 'ROOF',   color: '#988060', passable: false, desc: 'Pokemon GBA style Japanese traditional house roof tile, warm grayish-brown ceramic roof tiles in a diagonal ripple pattern, overhead view of rooftop, building exterior' },
+    { id: 'FENCE',  color: '#C0A870', passable: false, desc: 'Pokemon GBA style light wooden picket fence tile, pale brown horizontal wood planks with posts, simple rustic border fence, top-down view' },
+    { id: 'WATER',  color: '#58A8E8', passable: false, desc: 'Pokemon GBA style blue pond water tile, light cerulean blue with gentle diagonal shimmer/ripple lines, calm pond surface, seamlessly tileable, top-down view' },
+  ],
+  levelHints: { size: [26, 22], count: 1, themes: ['pokemon-style town'] },
+};
+
+function makePixelTownLevels() {
+  const W = 26, H = 22;
+  const [GRASS, PATH, TREE, FLOWER, WALL, ROOF, FENCE, WATER] = [0, 1, 2, 3, 4, 5, 6, 7];
+  const g = grid(H, W, GRASS);
+
+  // ── Tree border (2 rows/cols) ────────────────────────────────────────────────
+  for (let r = 0; r < 2; r++) hLine(g, r, 0, W - 1, TREE);
+  for (let r = H - 2; r < H; r++) hLine(g, r, 0, W - 1, TREE);
+  for (let c = 0; c < 2; c++) vLine(g, c, 2, H - 3, TREE);
+  for (let c = W - 2; c < W; c++) vLine(g, c, 2, H - 3, TREE);
+
+  // ── Scattered trees along inner edges ───────────────────────────────────────
+  [4, 7, 10, 15, 18, 21].forEach(c => { g[2][c] = TREE; g[H - 3][c] = TREE; });
+  [4, 7, 13, 16].forEach(r => { g[r][2] = TREE; g[r][W - 3] = TREE; });
+
+  // ── Paths (main cross) ───────────────────────────────────────────────────────
+  hLine(g, 10, 2, W - 3, PATH);   // horizontal road
+  hLine(g, 11, 2, W - 3, PATH);
+  vLine(g, 12, 2, 10, PATH);      // north-south lane
+  vLine(g, 13, 2, 10, PATH);
+  vLine(g, 12, 11, H - 3, PATH);
+  vLine(g, 13, 11, H - 3, PATH);
+
+  // ── House 1 (upper-left, cols 4-8, rows 3-8) ────────────────────────────────
+  fill(g, 3, 4, 4, 8, ROOF);
+  fill(g, 5, 4, 7, 8, WALL);
+
+  // ── House 2 (upper-right, cols 16-20, rows 3-8) ─────────────────────────────
+  fill(g, 3, 16, 4, 20, ROOF);
+  fill(g, 5, 16, 7, 20, WALL);
+
+  // ── Larger building (lower-center, cols 8-17, rows 13-18) ───────────────────
+  fill(g, 13, 8, 14, 17, ROOF);
+  fill(g, 15, 8, 17, 17, WALL);
+
+  // ── Fence rows (below path) ──────────────────────────────────────────────────
+  hLine(g, 9, 2, 11, FENCE);
+  hLine(g, 9, 14, W - 3, FENCE);
+
+  // ── Pond (lower-right, cols 19-23, rows 14-17) ──────────────────────────────
+  fill(g, 14, 19, 17, 23, WATER);
+
+  // ── Flower patches ───────────────────────────────────────────────────────────
+  const flowers = [
+    [4,8],[5,8],[6,8],   [4,9],[5,9],         // left of house 1
+    [16,8],[17,8],[18,8],[16,9],[17,9],        // left of house 2
+    [3,12],[4,12],[5,12],                      // top-center area
+    [20,12],[21,12],                           // top-right area
+    [4,18],[5,18],[4,19],[5,19],               // lower-left
+    [22,12],[23,12],                           // by pond
+  ];
+  flowers.forEach(([c, r]) => { if (g[r] && g[r][c] === GRASS) g[r][c] = FLOWER; });
+
+  return [{
+    id: '1-1',
+    theme: 'pokemon-style town',
+    size: [W, H],
+    tiles: g,
+    spawns: [
+      // Player spawns on the main path
+      { entity: 'TRAINER',   x: 12, y: 10 },
+      // NPCs
+      { entity: 'NPC_GIRL',  x: 6,  y: 8  },
+      { entity: 'NPC_BOY',   x: 17, y: 8  },
+      { entity: 'NPC_ELDER', x: 10, y: 12 },
+      { entity: 'NPC_GIRL',  x: 20, y: 12 },
+      // Chests hidden around town
+      { entity: 'CHEST', x: 7,  y: 7  },
+      { entity: 'CHEST', x: 19, y: 7  },
+      { entity: 'CHEST', x: 5,  y: 18 },
+      { entity: 'CHEST', x: 19, y: 13 },
+      { entity: 'CHEST', x: 10, y: 5  },
+    ],
+  }];
+}
+
 // ─── registry ────────────────────────────────────────────────────────────────
 
 const GAMES = {
@@ -441,6 +577,7 @@ const GAMES = {
   'dragon-brawl':   { gdd: DRAGON_BRAWL_GDD,  makeLevels: makeDragonBrawlLevels  },
   'island-quest':   { gdd: ISLAND_QUEST_GDD,  makeLevels: makeIslandQuestLevels  },
   'sewer-bot':      { gdd: SEWER_BOT_GDD,     makeLevels: makeSewerBotLevels     },
+  'pixel-town':     { gdd: PIXEL_TOWN_GDD,    makeLevels: makePixelTownLevels    },
 };
 
 // ─── bg-artist runner ────────────────────────────────────────────────────────

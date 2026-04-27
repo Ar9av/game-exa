@@ -4,7 +4,7 @@ An AI agent skill pack — give any coding agent a one-line prompt and get a com
 
 ## Example games
 
-Four complete games built with real **GPT Image 2** sprites and backgrounds. Screenshots taken live from headless Chromium:
+Five complete games built with real **GPT Image 2** sprites and backgrounds. Screenshots taken live from headless Chromium:
 
 | Game | Genre | Screenshot |
 |------|-------|-----------|
@@ -12,11 +12,12 @@ Four complete games built with real **GPT Image 2** sprites and backgrounds. Scr
 | **Dragon Brawl** — Street fighter battles through waves of gang members in gritty urban alleys | Beat-em-up | ![dragon-brawl](examples/screenshots/dragon-brawl.png) |
 | **Island Quest** — Young hero explores a magical island collecting heart crystals to restore the sacred shrine | Top-down adventure | ![island-quest](examples/screenshots/island-quest.png) |
 | **Sewer Bot** — Scrappy maintenance robot navigates toxic sewers collecting power cells while battling mechanical vermin | Action-platformer (NES) | ![sewer-bot](examples/screenshots/sewer-bot.png) |
+| **Pixel Town** — Trainer explores a Pokémon-inspired village, talking to locals and finding five hidden treasure chests | Top-down RPG | ![pixel-town](examples/screenshots/pixel-town.png) |
 
 Each example ships with full source, GPT Image 2 sprite sheets, level data, and `game-state.json`:
 
 ```bash
-cd examples/dungeon-knight   # or dragon-brawl / island-quest / sewer-bot
+cd examples/dungeon-knight   # or dragon-brawl / island-quest / sewer-bot / pixel-town
 npm install
 npm run dev                  # opens http://127.0.0.1:5173
 ```
@@ -67,6 +68,7 @@ node --env-file=~/.all-skills/.env scripts/gen_game.mjs dungeon-knight
 node --env-file=~/.all-skills/.env scripts/gen_game.mjs dragon-brawl
 node --env-file=~/.all-skills/.env scripts/gen_game.mjs island-quest
 node --env-file=~/.all-skills/.env scripts/gen_game.mjs sewer-bot
+node --env-file=~/.all-skills/.env scripts/gen_game.mjs pixel-town
 ```
 
 Change `'low'` to `'medium'` or `'high'` in the script for higher-quality sprites.

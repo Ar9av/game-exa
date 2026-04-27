@@ -1,6 +1,6 @@
 # Example games
 
-Three complete Phaser 3 games built with **gamewright** using real GPT Image 2 sprites and backgrounds. Each ships with full source, sprite sheets, level data, and `game-state.json` — run `npm install && npm run dev` to play immediately.
+Five complete Phaser 3 games built with **gamewright** using real GPT Image 2 sprites and backgrounds. Each ships with full source, sprite sheets, level data, and `game-state.json` — run `npm install && npm run dev` to play immediately.
 
 | Folder | Genre | Win condition | Controls |
 |---|---|---|---|
@@ -8,6 +8,7 @@ Three complete Phaser 3 games built with **gamewright** using real GPT Image 2 s
 | `dragon-brawl/` | Beat-em-up | Defeat 12 enemies | WASD/arrows + Space (punch) |
 | `island-quest/` | Top-down adventure | Collect 5 heart crystals | WASD/arrows + Space (sword) |
 | `sewer-bot/` | Action-platformer | Collect 5 batteries | Arrows + Space (jump) + Z (shoot) |
+| `pixel-town/` | Top-down RPG | Find all 5 treasure chests | WASD/arrows + Space (talk) |
 
 ---
 
@@ -62,10 +63,23 @@ Three complete Phaser 3 games built with **gamewright** using real GPT Image 2 s
 
 ---
 
+## Pixel Town
+
+*A trainer explores Verdant Town — a Pokémon-inspired village — talking to locals and hunting five hidden treasure chests scattered across the map.*
+
+![pixel-town](screenshots/pixel-town.png)
+
+- **Genre**: Top-down RPG (Pokémon Gold/Ruby style)
+- **Sprites**: GPT Image 2 — TRAINER, NPC_GIRL, NPC_BOY, NPC_ELDER, CHEST
+- **Tiles**: GPT Image 2 — grass, dirt path, trees, flowers, house walls, roofs, fences, water
+- **Mechanics**: 4-direction movement (no diagonal), NPC dialogue system (SPACE to talk/dismiss), wandering NPC AI, chest sparkle pickup, y-sort depth, HUD portrait + chest counter
+
+---
+
 ## Run any example
 
 ```bash
-cd examples/dungeon-knight   # or dragon-brawl / island-quest / sewer-bot
+cd examples/dungeon-knight   # or dragon-brawl / island-quest / sewer-bot / pixel-town
 npm install
 npm run dev                  # opens http://127.0.0.1:5173
 ```
@@ -79,6 +93,7 @@ node --env-file=~/.all-skills/.env scripts/gen_game.mjs dungeon-knight
 node --env-file=~/.all-skills/.env scripts/gen_game.mjs dragon-brawl
 node --env-file=~/.all-skills/.env scripts/gen_game.mjs island-quest
 node --env-file=~/.all-skills/.env scripts/gen_game.mjs sewer-bot
+node --env-file=~/.all-skills/.env scripts/gen_game.mjs pixel-town
 ```
 
 Requires `FAL_KEY` in `~/.all-skills/.env`. Change `'low'` to `'medium'` or `'high'` in the script for higher-quality sprites.

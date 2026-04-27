@@ -1,0 +1,651 @@
+{
+  "version": 1,
+  "name": "nova-blitz",
+  "prompt": "Neon arcade space shooter — blast waves of alien fighters in a glowing cyberpunk cosmos",
+  "genre": "shoot-em-up",
+  "createdAt": "2026-04-27T10:31:32.440Z",
+  "gdd": {
+    "title": "Nova Blitz",
+    "genre": "shoot-em-up",
+    "tagline": "Neon arcade space shooter — blast waves of alien fighters in a glowing cyberpunk cosmos",
+    "loop": "Pilot your neon cyan ship through escalating waves of alien fighters and bombers. Hold Z to auto-fire. Build combos by killing enemies fast. Survive 5 waves to win.",
+    "winCondition": "window.__gameState.enemiesDestroyed >= 30",
+    "loseCondition": "window.__gameState.playerHp <= 0",
+    "controls": {
+      "movement": "8-direction",
+      "actions": [
+        {
+          "key": "Z",
+          "name": "Fire",
+          "description": "Hold to auto-fire neon plasma bolts"
+        },
+        {
+          "key": "X",
+          "name": "Bomb",
+          "description": "Nova bomb — clears all enemies on screen (2 charges)"
+        }
+      ]
+    },
+    "entities": [
+      {
+        "id": "SHIP",
+        "kind": "player",
+        "color": "glowing cyan neon",
+        "desc": "Sleek neon cyan starfighter spaceship top-down view: pointed nose, swept-back wings, glowing cyan engine nacelles, bright white cockpit, retro 8-bit pixel art style",
+        "states": [
+          "idle",
+          "walk"
+        ],
+        "speed": 200,
+        "hp": 5
+      },
+      {
+        "id": "FIGHTER",
+        "kind": "enemy",
+        "color": "hot pink magenta neon",
+        "desc": "Angular alien fighter jet top-down view: sharp pointed wings spread wide, glowing magenta-pink core engine, neon pink hull with purple accents, retro 8-bit pixel art style",
+        "states": [
+          "idle",
+          "walk"
+        ],
+        "speed": 90,
+        "hp": 1
+      },
+      {
+        "id": "BOMBER",
+        "kind": "enemy",
+        "color": "neon orange amber",
+        "desc": "Heavy alien bomber top-down view: wide rounded wings, triple orange glowing engines, armored amber-orange hull, ominous bulk, retro 8-bit pixel art style",
+        "states": [
+          "idle",
+          "walk"
+        ],
+        "speed": 50,
+        "hp": 3
+      },
+      {
+        "id": "BULLET",
+        "kind": "projectile",
+        "color": "bright cyan",
+        "desc": "Tiny elongated neon cyan plasma bolt, glowing bright blue-white, pixel art, no background",
+        "states": [
+          "idle"
+        ],
+        "speed": 0,
+        "hp": 0
+      },
+      {
+        "id": "GEM",
+        "kind": "pickup",
+        "color": "rainbow crystal",
+        "desc": "Small glowing rainbow gem crystal, multi-faceted with inner light, sparkles, pixel art collectible item",
+        "states": [
+          "idle"
+        ],
+        "speed": 0,
+        "hp": 0
+      }
+    ],
+    "tilesetPalette": [
+      {
+        "id": "VOID",
+        "color": "#04040f",
+        "passable": true,
+        "desc": "Deep outer space black tile: pure void, absolute darkness of deep space, no detail, seamless"
+      },
+      {
+        "id": "NEBULA",
+        "color": "#0d0520",
+        "passable": true,
+        "desc": "Dark cosmic nebula tile: subtle deep purple-blue wisps of stellar gas against black space, seamless, atmospheric"
+      },
+      {
+        "id": "STARFIELD",
+        "color": "#080818",
+        "passable": true,
+        "desc": "Distant starfield space tile: tiny scattered white and pale-blue star pinpoints against black sky, seamless tileable space background"
+      }
+    ],
+    "levelHints": {
+      "size": [
+        16,
+        24
+      ],
+      "count": 1,
+      "themes": [
+        "deep space"
+      ]
+    }
+  },
+  "levels": [
+    {
+      "id": "1-1",
+      "theme": "deep space",
+      "size": [
+        16,
+        24
+      ],
+      "tiles": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "spawns": [
+        {
+          "entity": "SHIP",
+          "x": 8,
+          "y": 20
+        },
+        {
+          "entity": "FIGHTER",
+          "x": 4,
+          "y": 3
+        },
+        {
+          "entity": "FIGHTER",
+          "x": 8,
+          "y": 2
+        },
+        {
+          "entity": "FIGHTER",
+          "x": 12,
+          "y": 3
+        },
+        {
+          "entity": "BOMBER",
+          "x": 6,
+          "y": 5
+        },
+        {
+          "entity": "BOMBER",
+          "x": 10,
+          "y": 5
+        },
+        {
+          "entity": "GEM",
+          "x": 8,
+          "y": 10
+        }
+      ]
+    }
+  ],
+  "assets": {
+    "sprites": [
+      {
+        "sheet": "/Users/ar9av/Documents/projects/game-creation-agent/examples/nova-blitz/public/assets/entities.png",
+        "relSheet": "assets/entities.png",
+        "rows": [
+          "SHIP",
+          "FIGHTER",
+          "BOMBER",
+          "BULLET",
+          "GEM"
+        ],
+        "cols": [
+          "idle",
+          "walk"
+        ],
+        "cell": 256,
+        "bg": "magenta",
+        "textureKey": "entities-1"
+      }
+    ],
+    "tiles": {
+      "relSheet": "assets/tiles.png",
+      "tileSize": 32,
+      "ids": [
+        "VOID",
+        "NEBULA",
+        "STARFIELD"
+      ],
+      "passable": [
+        true,
+        true,
+        true
+      ]
+    },
+    "bg": {
+      "relPath": "assets/bg.png",
+      "scrollFactor": 0.3,
+      "theme": "space"
+    }
+  },
+  "code": {
+    "entryPoint": "src/main.js",
+    "scenes": [
+      "Boot",
+      "Preload",
+      "Game"
+    ]
+  },
+  "qa": []
+}

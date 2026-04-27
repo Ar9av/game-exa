@@ -1,6 +1,6 @@
 # Example games
 
-Five complete Phaser 3 games built with **gamewright** using real GPT Image 2 sprites and backgrounds. Each ships with full source, sprite sheets, level data, and `game-state.json` — run `npm install && npm run dev` to play immediately.
+Six complete Phaser 3 games built with **gamewright** using real GPT Image 2 sprites and backgrounds. Each ships with full source, sprite sheets, level data, and `game-state.json` — run `npm install && npm run dev` to play immediately.
 
 | Folder | Genre | Win condition | Controls |
 |---|---|---|---|
@@ -9,6 +9,7 @@ Five complete Phaser 3 games built with **gamewright** using real GPT Image 2 sp
 | `island-quest/` | Top-down adventure | Collect 5 heart crystals | WASD/arrows + Space (sword) |
 | `sewer-bot/` | Action-platformer | Collect 5 batteries | Arrows + Space (jump) + Z (shoot) |
 | `pixel-town/` | Top-down RPG | Find all 5 treasure chests | WASD/arrows + Space (talk) |
+| `nova-blitz/` | Neon shoot-em-up | Destroy 30 enemies | WASD/arrows + Z (fire) + X (bomb) |
 
 ---
 
@@ -60,6 +61,20 @@ Five complete Phaser 3 games built with **gamewright** using real GPT Image 2 sp
 - **Sprites**: GPT Image 2 — VOLT_BOT, rat drone, sludge blob, pipe spider, battery, shield pack, mainframe boss
 - **Background**: GPT Image 2 dungeon/sewer parallax
 - **Mechanics**: Coyote-time jump, Z-key shoot (bullet pool, max 3), ACID tile hazard, SHIELD_PACK armor pickup, CORE_MAINFRAME boss with 3→5-way bullet spread, NES-style segmented HP bar with portrait box and lives counter
+
+---
+
+## Nova Blitz
+
+*Pilot a neon cyan starfighter through escalating waves of massive alien ships. Hold Z to auto-fire, X drops a screen-clearing nova bomb, build combo chains for bonus score.*
+
+![nova-blitz](screenshots/nova-blitz.gif)
+
+- **Genre**: Neon shoot-em-up (Galaga / DoDonPachi style)
+- **Sprites**: GPT Image 2 — SHIP, FIGHTER, BOMBER, BULLET, GEM
+- **Tiles**: GPT Image 2 — void, nebula, starfield
+- **Background**: GPT Image 2 deep space parallax
+- **Mechanics**: Procedural 3-layer scrolling starfield, V-formation enemy waves, sinusoidal dive AI, bomber homing shots, nova bomb, combo multiplier, engine glow trail, segmented shield HUD, full screen flash + camera shake on kills
 
 ---
 

@@ -4,7 +4,7 @@ An AI agent skill pack — give any coding agent a one-line prompt and get a com
 
 ## Example games
 
-Five complete games built with real **GPT Image 2** sprites and backgrounds. Screenshots taken live from headless Chromium:
+Six complete games built with real **GPT Image 2** sprites and backgrounds. Screenshots taken live from headless Chromium:
 
 | Game | Genre | Screenshot |
 |------|-------|-----------|
@@ -13,6 +13,7 @@ Five complete games built with real **GPT Image 2** sprites and backgrounds. Scr
 | **Island Quest** — Young hero explores a magical island collecting heart crystals to restore the sacred shrine | Top-down adventure | ![island-quest](examples/screenshots/island-quest.png) |
 | **Sewer Bot** — Scrappy maintenance robot navigates toxic sewers collecting power cells while battling mechanical vermin | Action-platformer (NES) | ![sewer-bot](examples/screenshots/sewer-bot.png) |
 | **Pixel Town** — Trainer explores a Pokémon-inspired village, talking to locals and finding five hidden treasure chests | Top-down RPG | ![pixel-town](examples/screenshots/pixel-town.png) |
+| **Nova Blitz** — Pilot a neon cyan starfighter through waves of massive alien ships, build combos and drop screen-clearing nova bombs | Neon shoot-em-up | ![nova-blitz](examples/screenshots/nova-blitz.gif) |
 
 Each example ships with full source, GPT Image 2 sprite sheets, level data, and `game-state.json`:
 
@@ -97,6 +98,7 @@ Change `'low'` to `'medium'` or `'high'` in the script for higher-quality sprite
 | Beat-em-up | dragon-brawl | Pseudo-3D Y-depth movement, y-sort, one-way camera scroll, enemy wave spawner, combo hits |
 | Top-down adventure | island-quest | 8-direction normalized movement, sword knockback, chase/wander AI, tilemap collision |
 | Top-down RPG | pixel-town | 4-direction movement, NPC dialogue system, wander AI, chest pickups, y-sort depth |
+| Neon shoot-em-up | nova-blitz | Auto-fire, wave spawner, V-formation + bomber AI, combo multiplier, nova bomb, starfield, screen shake |
 
 ## Optional: multiplayer
 
@@ -141,6 +143,7 @@ game-creation-agent/
     ├── island-quest/         # top-down adventure with 8-dir movement
     ├── sewer-bot/            # NES-quality platformer with arm cannon, boss spread
     ├── pixel-town/           # Pokémon-style top-down RPG with NPC dialogue
+    ├── nova-blitz/           # neon shoot-em-up with wave AI, combos, nova bomb
     └── screenshots/          # live headless-Chromium screenshots
 ```
 

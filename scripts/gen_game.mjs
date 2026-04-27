@@ -586,6 +586,91 @@ function makePixelTownLevels() {
   }];
 }
 
+// ─── Nova Blitz GDD ──────────────────────────────────────────────────────────
+
+const NOVA_BLITZ_GDD = {
+  title: 'Nova Blitz',
+  genre: 'shoot-em-up',
+  tagline: 'Neon arcade space shooter — blast waves of alien fighters in a glowing cyberpunk cosmos',
+  loop: 'Pilot your neon cyan ship through escalating waves of alien fighters and bombers. Hold Z to auto-fire. Build combos by killing enemies fast. Survive 5 waves to win.',
+  winCondition: 'window.__gameState.enemiesDestroyed >= 30',
+  loseCondition: 'window.__gameState.playerHp <= 0',
+  controls: {
+    movement: '8-direction',
+    actions: [
+      { key: 'Z', name: 'Fire', description: 'Hold to auto-fire neon plasma bolts' },
+      { key: 'X', name: 'Bomb', description: 'Nova bomb — clears all enemies on screen (2 charges)' },
+    ],
+  },
+  entities: [
+    {
+      id: 'SHIP', kind: 'player',
+      color: 'glowing cyan neon',
+      desc: 'Sleek neon cyan starfighter spaceship top-down view: pointed nose, swept-back wings, glowing cyan engine nacelles, bright white cockpit, retro 8-bit pixel art style',
+      states: ['idle', 'walk'], speed: 200, hp: 5,
+    },
+    {
+      id: 'FIGHTER', kind: 'enemy',
+      color: 'hot pink magenta neon',
+      desc: 'Angular alien fighter jet top-down view: sharp pointed wings spread wide, glowing magenta-pink core engine, neon pink hull with purple accents, retro 8-bit pixel art style',
+      states: ['idle', 'walk'], speed: 90, hp: 1,
+    },
+    {
+      id: 'BOMBER', kind: 'enemy',
+      color: 'neon orange amber',
+      desc: 'Heavy alien bomber top-down view: wide rounded wings, triple orange glowing engines, armored amber-orange hull, ominous bulk, retro 8-bit pixel art style',
+      states: ['idle', 'walk'], speed: 50, hp: 3,
+    },
+    {
+      id: 'BULLET', kind: 'projectile',
+      color: 'bright cyan',
+      desc: 'Tiny elongated neon cyan plasma bolt, glowing bright blue-white, pixel art, no background',
+      states: ['idle'], speed: 0, hp: 0,
+    },
+    {
+      id: 'GEM', kind: 'pickup',
+      color: 'rainbow crystal',
+      desc: 'Small glowing rainbow gem crystal, multi-faceted with inner light, sparkles, pixel art collectible item',
+      states: ['idle'], speed: 0, hp: 0,
+    },
+  ],
+  tilesetPalette: [
+    { id: 'VOID',   color: '#04040f', passable: true, desc: 'Deep outer space black tile: pure void, absolute darkness of deep space, no detail, seamless' },
+    { id: 'NEBULA', color: '#0d0520', passable: true, desc: 'Dark cosmic nebula tile: subtle deep purple-blue wisps of stellar gas against black space, seamless, atmospheric' },
+    { id: 'STARFIELD', color: '#080818', passable: true, desc: 'Distant starfield space tile: tiny scattered white and pale-blue star pinpoints against black sky, seamless tileable space background' },
+  ],
+  levelHints: { size: [16, 24], count: 1, themes: ['deep space'] },
+};
+
+function makeNovaBlitzLevels() {
+  // 15×11 tiles = 480×352px — fits exactly in the 480×360 viewport
+  const W = 15, H = 11;
+  const [VOID, NEBULA, STARFIELD] = [0, 1, 2];
+  const g = grid(H, W, VOID);
+  // Scatter nebula patches
+  [[1,2],[1,3],[2,2],[8,10],[8,11],[9,11]].forEach(([r,c]) => { if (g[r]?.[c] !== undefined) g[r][c] = NEBULA; });
+  // Scatter starfield tiles
+  [[0,7],[2,5],[3,12],[4,1],[4,9],[6,6],[7,2],[7,13],[9,4],[10,8]].forEach(([r,c]) => { if (g[r]?.[c] === VOID) g[r][c] = STARFIELD; });
+
+  return [{
+    id: '1-1',
+    theme: 'deep space',
+    size: [W, H],
+    tiles: g,
+    spawns: [
+      // Player at center-bottom of visible area
+      { entity: 'SHIP',    x: 7, y: 9  },
+      // Initial enemies in upper half
+      { entity: 'FIGHTER', x: 4, y: 1  },
+      { entity: 'FIGHTER', x: 7, y: 0  },
+      { entity: 'FIGHTER', x: 11,y: 1  },
+      { entity: 'BOMBER',  x: 5, y: 3  },
+      { entity: 'BOMBER',  x: 10,y: 3  },
+      { entity: 'GEM',     x: 7, y: 5  },
+    ],
+  }];
+}
+
 // ─── registry ────────────────────────────────────────────────────────────────
 
 const GAMES = {
@@ -594,6 +679,7 @@ const GAMES = {
   'island-quest':   { gdd: ISLAND_QUEST_GDD,  makeLevels: makeIslandQuestLevels  },
   'sewer-bot':      { gdd: SEWER_BOT_GDD,     makeLevels: makeSewerBotLevels     },
   'pixel-town':     { gdd: PIXEL_TOWN_GDD,    makeLevels: makePixelTownLevels    },
+  'nova-blitz':     { gdd: NOVA_BLITZ_GDD,    makeLevels: makeNovaBlitzLevels    },
 };
 
 // ─── bg-artist runner ────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-# gameforge
+# game-creation-agent
 
 An AI agent skill pack — give any coding agent a one-line prompt and get a complete, playable **Phaser 3** game back. GPT Image 2 sprites, multi-genre game code, and a gap-checker that validates every level before calling it done.
 
@@ -39,13 +39,13 @@ description ─▶ game-designer ─▶ world-architect ─▶ sprite-artist ┐
 ## Install
 
 ```bash
-git clone https://github.com/Ar9av/gameforge.git ~/gameforge
-cd ~/gameforge
+git clone https://github.com/Ar9av/gameforge.git ~/game-creation-agent
+cd ~/game-creation-agent
 npm install
 
 # Symlink skills into your host's skill directory (Claude Code, Cursor, etc.)
 mkdir -p ~/.claude/skills
-ln -sf ~/gameforge/skills/* ~/.claude/skills/
+ln -sf ~/game-creation-agent/skills/* ~/.claude/skills/
 
 # (Optional) Install Playwright's Chromium for QA screenshots
 npx playwright install chromium
@@ -57,7 +57,7 @@ In your coding agent (Claude Code, Cursor, etc.), with the skills symlinked:
 
 > *"Make me a game where a robot navigates a sewer collecting batteries."*
 
-The agent reads `gameforge`'s SKILL.md, follows the pipeline, invokes the sub-skills, runs the deterministic scripts, and reports success.
+The agent reads the orchestrator SKILL.md, follows the pipeline, invokes the sub-skills, runs the deterministic scripts, and reports success.
 
 ### Regenerate example assets
 
@@ -77,7 +77,7 @@ Change `'low'` to `'medium'` or `'high'` in the script for higher-quality sprite
 
 | Skill | Role | Image gen? |
 |---|---|---|
-| `gameforge` | Orchestrator: drives pipeline, manages state | — |
+| `orchestrator` | Drives pipeline, manages state | — |
 | `game-designer` | Prompt → GDD JSON | — |
 | `world-architect` | GDD → level layouts | — |
 | `sprite-artist` | Entities → sprite sheets. **GPT Image 2** or procedural. | yes |
@@ -96,6 +96,7 @@ Change `'low'` to `'medium'` or `'high'` in the script for higher-quality sprite
 | Action-platformer | dungeon-knight, sewer-bot | Gravity, coyote-time jump, variable jump height, sword slash / arm cannon, spike/acid hazard tiles, boss fight |
 | Beat-em-up | dragon-brawl | Pseudo-3D Y-depth movement, y-sort, one-way camera scroll, enemy wave spawner, combo hits |
 | Top-down adventure | island-quest | 8-direction normalized movement, sword knockback, chase/wander AI, tilemap collision |
+| Top-down RPG | pixel-town | 4-direction movement, NPC dialogue system, wander AI, chest pickups, y-sort depth |
 
 ## Optional: multiplayer
 
@@ -115,7 +116,7 @@ Up to 4 players, 20 Hz tick rate, TypeScript shared schemas. See [`skills/multip
 ## Project layout
 
 ```
-gameforge/
+game-creation-agent/
 ├── README.md
 ├── package.json
 ├── scripts/
@@ -139,6 +140,7 @@ gameforge/
     ├── dragon-brawl/         # beat-em-up with pseudo-3D, wave spawner
     ├── island-quest/         # top-down adventure with 8-dir movement
     ├── sewer-bot/            # NES-quality platformer with arm cannon, boss spread
+    ├── pixel-town/           # Pokémon-style top-down RPG with NPC dialogue
     └── screenshots/          # live headless-Chromium screenshots
 ```
 

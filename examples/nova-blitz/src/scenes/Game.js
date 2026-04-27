@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 
 const PLAYER_SPEED   = 200;
 const BULLET_SPEED   = 520;
-const FIRE_RATE_MS   = 110;
+const FIRE_RATE_MS   = 160;
 const PLAYER_HP      = 5;
 const ENEMIES_TO_WIN = 30;
 const INVULN_MS      = 1400;
@@ -77,15 +77,19 @@ export default class Game extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, worldW, worldH);
     this.cameras.main.setScroll(0, 0);
 
-    // Player
+    // Cell size from manifest — used to compute correct scale (avoids tween bug)
+    this._cellSize = manifest.sprites[0]?.cell ?? 64;
+
+    // Player — 44px display, scale computed against actual cell size
+    const playerPx = 44;
     const pSp = lvl.spawns.find(s => s.entity === 'SHIP');
     this.player = this.physics.add.sprite(
       (pSp?.x ?? 8) * ts + ts / 2,
-      (pSp?.y ?? 20) * ts + ts / 2,
+      (pSp?.y ?? 9) * ts + ts / 2,
       texMap.SHIP ?? 'entities-1'
     );
-    this.player.setDisplaySize(ts * 1.1, ts * 1.1);
-    this.player.body.setSize(ts * 0.55, ts * 0.55, true);
+    this.player.setScale(playerPx / this._cellSize);
+    this.player.body.setSize(playerPx * 0.55, playerPx * 0.55, true);
     this.player.setCollideWorldBounds(true);
     this.player.setDepth(20);
     this.player.setTint(C_CYAN);
@@ -156,7 +160,7 @@ export default class Game extends Phaser.Scene {
     this.add.rectangle(4, 4, 36, 36, 0x000000, 0.8).setOrigin(0).setScrollFactor(0).setDepth(300);
     this.add.rectangle(5, 5, 34, 34, C_CYAN, 0.15).setOrigin(0).setScrollFactor(0).setDepth(301);
     this.add.sprite(22, 22, texMap.SHIP ?? 'entities-1')
-      .setDisplaySize(26, 26).setScrollFactor(0).setDepth(302).setTint(C_CYAN);
+      .setScale(26 / this._cellSize).setScrollFactor(0).setDepth(302).setTint(C_CYAN);
 
     this._shieldSegs = [];
     for (let i = 0; i < PLAYER_HP; i++) {
@@ -227,16 +231,18 @@ export default class Game extends Phaser.Scene {
   _spawnEnemy(x, y, type, texMap, ts, speedMult) {
     if (this._gameOver) return;
     const isBomber = type === 'BOMBER';
+    // Fighter = 58px wide, Bomber = 80px wide — feels right at 480px viewport
+    const displayPx    = isBomber ? 80 : 58;
+    const targetScale  = displayPx / this._cellSize;
     const e = this.physics.add.sprite(x, y, texMap[type] ?? 'entities-1');
-    e.setDisplaySize(ts * (isBomber ? 1.3 : 1.05), ts * (isBomber ? 1.3 : 1.05));
-    e.body.setSize(ts * 0.55, ts * 0.55, true);
+    e.body.setSize(displayPx * 0.55, displayPx * 0.55, true);
     e.setDepth(15);
     e.setData({ type, hp: isBomber ? 3 : 1, speedMult });
-    e.setTint(isBomber ? C_ORANGE : C_PINK);
-    e.setAlpha(0).setScale(0.2);
+    // No tint — let GPT Image 2 natural colors show through
+    e.setAlpha(0).setScale(targetScale * 0.15);
 
-    // Materialize
-    this.tweens.add({ targets: e, alpha: 1, scaleX: 1, scaleY: 1, duration: 220, ease: 'Back.Out' });
+    // Materialize — tween to correct targetScale, NOT 1 (which would be full 256px)
+    this.tweens.add({ targets: e, alpha: 1, scaleX: targetScale, scaleY: targetScale, duration: 220, ease: 'Back.Out' });
 
     // Fly to formation y then start AI
     const settleY = Phaser.Math.Between(40, 110);
@@ -282,16 +288,12 @@ export default class Game extends Phaser.Scene {
   // ── Shooting ─────────────────────────────────────────────────────────────────
 
   _fireBullet() {
-    const manifest = this.registry.get('manifest');
-    const texMap = {};
-    manifest.sprites.forEach((sh, i) => sh.rows.forEach(r => { texMap[r] = `entities-${i + 1}`; }));
-    const ts = manifest.tiles.tileSize;
-    const b = this.physics.add.sprite(this.player.x, this.player.y - 18, texMap.BULLET ?? 'entities-1');
-    b.setDisplaySize(ts * 0.28, ts * 0.52);
-    b.setTint(C_CYAN);
-    b.setDepth(18);
+    // Use rectangle — cleaner and avoids entity-sprite rendering artifacts
+    const b = this.add.rectangle(this.player.x, this.player.y - 18, 5, 16, 0xaaffff).setDepth(18);
+    this.physics.add.existing(b);
     b.body.setVelocity(0, -BULLET_SPEED);
     b.body.allowGravity = false;
+    b.body.setSize(5, 16);
     this._bullets.add(b);
 
     // Muzzle flash
@@ -406,9 +408,7 @@ export default class Game extends Phaser.Scene {
 
   _hitFlash(e) {
     e.setTint(C_WHITE);
-    this.time.delayedCall(80, () => {
-      if (e.active) e.setTint(e.getData('type') === 'BOMBER' ? C_ORANGE : C_PINK);
-    });
+    this.time.delayedCall(80, () => { if (e.active) e.clearTint(); });
   }
 
   // ── Visual FX ─────────────────────────────────────────────────────────────────
@@ -465,7 +465,7 @@ export default class Game extends Phaser.Scene {
     manifest.sprites.forEach((sh, i) => sh.rows.forEach(r => { texMap[r] = `entities-${i + 1}`; }));
     const ts = manifest.tiles.tileSize;
     const gem = this.physics.add.sprite(x, y, texMap.GEM ?? 'entities-1');
-    gem.setDisplaySize(ts * 0.7, ts * 0.7).setDepth(14);
+    gem.setScale(22 / this._cellSize).setDepth(14);
     gem.body.setVelocity(Phaser.Math.Between(-40, 40), Phaser.Math.Between(30, 80));
     gem.body.allowGravity = false;
     this._gems.add(gem);

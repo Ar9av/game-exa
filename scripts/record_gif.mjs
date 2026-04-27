@@ -36,57 +36,63 @@ const page = await context.newPage();
 await page.goto(URL_ARG, { waitUntil: 'networkidle' });
 await page.waitForTimeout(2000);
 
-// Focus canvas for keyboard input
-const canvas = page.locator('canvas');
-await canvas.click();
+// Wait for the Game scene to be ready (uses window.__game and window.__gameReady)
+await page.waitForFunction(() => window.__gameReady === true, { timeout: 15000 }).catch(() => {});
+
+// Helper: inject Phaser input state directly via window.__game
+const injectInput = (dir, isDown) => page.evaluate(({ dir, isDown }) => {
+  const g = window.__game;
+  if (!g) return false;
+  const scene = g.scene.scenes.find(s => s.sys.settings.key === 'Game' && s.sys.isActive());
+  if (!scene) return false;
+  if (dir === 'fire') { scene.zKey.isDown = isDown; return true; }
+  if (dir === 'bomb') { if (isDown) scene._bombBlast?.(); return true; }
+  const map = { left: 'left', right: 'right', up: 'up', down: 'down' };
+  if (map[dir] && scene.cursors) { scene.cursors[map[dir]].isDown = isDown; return true; }
+  return false;
+}, { dir, isDown });
 
 console.log('   Game ready — running automation...');
 
-// ── Automation: hold Z to fire, zigzag movement ──────────────────────────────
-
-const moveStep = async (key, ms) => {
-  await page.keyboard.down(key);
-  await page.waitForTimeout(ms);
-  await page.keyboard.up(key);
-};
-
-// Hold Z (fire) for entire duration
-page.keyboard.down('z');
-
-const elapsed = { v: 0 };
 const start = Date.now();
+let bombUsed = false;
 
-// Zigzag pattern: left → right → left ... while slowly drifting
-const pattern = async () => {
-  const moves = [
-    { key: 'ArrowLeft',  ms: 280 },
-    { key: 'ArrowRight', ms: 320 },
-    { key: 'ArrowLeft',  ms: 240 },
-    { key: 'ArrowUp',    ms: 180 },
-    { key: 'ArrowRight', ms: 280 },
-    { key: 'ArrowDown',  ms: 160 },
-    { key: 'ArrowRight', ms: 300 },
-    { key: 'ArrowLeft',  ms: 260 },
-    { key: 'ArrowUp',    ms: 200 },
-    { key: 'ArrowLeft',  ms: 240 },
-  ];
+// Start continuous firing via interval
+const fireInterval = setInterval(() => injectInput('fire', true), 50);
 
-  while (Date.now() - start < DURATION - 1500) {
-    for (const m of moves) {
-      if (Date.now() - start >= DURATION - 1500) break;
-      await moveStep(m.key, m.ms);
-      await page.waitForTimeout(40);
-    }
-    // Use bomb once mid-run
-    const elapsed2 = Date.now() - start;
-    if (elapsed2 > 5000 && elapsed2 < 6000) {
-      await page.keyboard.press('x');
-    }
-  }
+const moveStep = async (dir, ms) => {
+  await injectInput(dir, true);
+  await page.waitForTimeout(ms);
+  await injectInput(dir, false);
+  await page.waitForTimeout(30);
 };
 
-await pattern();
-await page.keyboard.up('z');
+const moves = [
+  { dir: 'left',  ms: 300 }, { dir: 'right', ms: 350 },
+  { dir: 'left',  ms: 250 }, { dir: 'up',    ms: 200 },
+  { dir: 'right', ms: 300 }, { dir: 'down',  ms: 180 },
+  { dir: 'right', ms: 320 }, { dir: 'left',  ms: 270 },
+  { dir: 'up',    ms: 220 }, { dir: 'left',  ms: 260 },
+];
+
+let mi = 0;
+while (Date.now() - start < DURATION - 1000) {
+  const m = moves[mi % moves.length];
+  mi++;
+  await moveStep(m.dir, m.ms);
+
+  const elapsed2 = Date.now() - start;
+  if (!bombUsed && elapsed2 > 5500 && elapsed2 < 6500) {
+    bombUsed = true;
+    console.log('   Dropping nova bomb...');
+    await injectInput('bomb', true);
+    await page.waitForTimeout(120);
+    await injectInput('bomb', false);
+  }
+}
+
+clearInterval(fireInterval);
+await injectInput('fire', false);
 
 // Final screenshot
 await page.screenshot({ path: OUT_PATH.replace('.gif', '-final.png') });

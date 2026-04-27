@@ -1,10 +1,12 @@
 # game-creation-agent
 
-An AI agent skill pack — give any coding agent a one-line prompt and get a complete, playable **Phaser 3** game back. GPT Image 2 sprites, multi-genre game code, and a gap-checker that validates every level before calling it done.
+**The AI-native game engine.** Describe your game in one sentence — get back a complete, playable title with real pixel-art sprites, hand-crafted levels, production game code, automated QA, and optional real-time multiplayer.
 
-## Example games
+No Unity license. No art budget. No boilerplate. Just a description.
 
-Six complete games built with real **GPT Image 2** sprites and backgrounds. Screenshots taken live from headless Chromium:
+## Games built with it
+
+Six complete games, generated end-to-end. Screenshots captured live from headless Chromium:
 
 | Game | Genre | Screenshot |
 |------|-------|-----------|
@@ -15,15 +17,17 @@ Six complete games built with real **GPT Image 2** sprites and backgrounds. Scre
 | **Pixel Town** — Trainer explores a Pokémon-inspired village, talking to locals and finding five hidden treasure chests | Top-down RPG | ![pixel-town](examples/screenshots/pixel-town.png) |
 | **Nova Blitz** — Pilot a neon cyan starfighter through waves of massive alien ships, build combos and drop screen-clearing nova bombs | Neon shoot-em-up | ![nova-blitz](examples/screenshots/nova-blitz.gif) |
 
-Each example ships with full source, GPT Image 2 sprite sheets, level data, and `game-state.json`:
+Each ships with full source, GPT Image 2 sprite sheets, level data, and `game-state.json`. Play any of them immediately:
 
 ```bash
-cd examples/dungeon-knight   # or dragon-brawl / island-quest / sewer-bot / pixel-town
+cd examples/nova-blitz   # or dungeon-knight / dragon-brawl / island-quest / sewer-bot / pixel-town
 npm install
-npm run dev                  # opens http://127.0.0.1:5173
+npm run dev              # opens http://127.0.0.1:5173
 ```
 
-## How it works
+## Engine architecture
+
+The engine is a fully automated pipeline. Each stage is a specialized system — some powered by LLMs, some by image generation, some deterministic scripts:
 
 ```
 description ─▶ game-designer ─▶ world-architect ─▶ sprite-artist ┐
@@ -32,37 +36,59 @@ description ─▶ game-designer ─▶ world-architect ─▶ sprite-artist ┐
                                                                                                    │ (max 3 retries)
 ```
 
-- **LLM stages** (`game-designer`, `world-architect`, `codesmith`, `refiner`) are plain SKILL.md instruction docs — your coding agent does the reasoning. No separate Anthropic API key needed; the agent you're already running handles it.
-- **Asset stages** (`sprite-artist`, `tile-artist`, `bg-artist`) drive **GPT Image 2** for real pixel-art, with deterministic procedural fallbacks.
-- **Deterministic stages** (`playtester`, `gap-checker`) are Node scripts — no LLM, no flakiness.
-- **State** lives in `game-state.json`; every stage reads/writes it.
+| System | What it does |
+|--------|-------------|
+| **game-designer** | Turns your description into a full Game Design Document (GDD) — entities, mechanics, win condition, camera, HUD |
+| **world-architect** | GDD → tile-based level layouts with spawn points, hazards, and collectibles |
+| **sprite-artist** | Every entity → a GPT Image 2 pixel-art sprite sheet (walk/idle/attack frames). Procedural fallback if no API key. |
+| **tile-artist** | Environment palette → GPT Image 2 tileset PNG |
+| **bg-artist** | Genre + mood → multi-layer parallax background PNG |
+| **codesmith** | GDD + asset manifest → complete `src/scenes/Game.js` with physics, AI, HUD, win/lose flow |
+| **playtester** | Headless Playwright boots the game, captures screenshots, runs pixelmatch diff to detect blank screens or regressions |
+| **gap-checker** | Playability validation: static BFS reachability analysis + dynamic input fuzzer. Fails the build if the level is unwinnable. |
+| **refiner** | Reads playtester/gap-checker failures, patches the broken file, hands back to playtester (max 3 retries) |
+| **multiplayer** | Generates a Colyseus WebSocket server + patches Game.js for real-time sync. Optional. |
 
-## Install
+State is carried in `game-state.json` across every stage. The engine runs inside any LLM coding agent (Claude Code, Cursor, etc.) that can read SKILL.md files — no separate Anthropic API key required.
+
+## Supported genres
+
+The engine ships with battle-tested implementations for six genres, each with genre-specific mechanics baked in:
+
+| Genre | Reference game | Engine mechanics |
+|-------|---------------|-----------------|
+| Action-platformer | dungeon-knight, sewer-bot | Gravity, coyote-time jump, variable jump height, melee / projectile attack, spike/acid hazard tiles, multi-phase boss fight |
+| Beat-em-up | dragon-brawl | Pseudo-3D Y-depth movement, y-sort rendering, one-way camera scroll, enemy wave spawner, combo hit system |
+| Top-down adventure | island-quest | 8-direction normalized movement, weapon knockback, enemy chase/wander AI, tilemap collision layers |
+| Top-down RPG | pixel-town | 4-direction movement, NPC dialogue system, wander AI, chest pickups, y-sort depth |
+| Neon shoot-em-up | nova-blitz | Auto-fire, wave spawner, V-formation + bomber AI, combo multiplier, nova bomb, procedural starfield, screen shake |
+
+New genres can be added by writing a new codesmith template — the rest of the pipeline is genre-agnostic.
+
+## Quick start
 
 ```bash
 git clone https://github.com/Ar9av/gameforge.git ~/game-creation-agent
 cd ~/game-creation-agent
 npm install
 
-# Symlink skills into your host's skill directory (Claude Code, Cursor, etc.)
+# Symlink engine skills into your coding agent's skill directory
 mkdir -p ~/.claude/skills
 ln -sf ~/game-creation-agent/skills/* ~/.claude/skills/
 
-# (Optional) Install Playwright's Chromium for QA screenshots
+# (Optional) Playwright Chromium for QA screenshots and GIF recording
 npx playwright install chromium
 ```
 
-## Usage
-
-In your coding agent (Claude Code, Cursor, etc.), with the skills symlinked:
+Then, in Claude Code (or any agent with the skills loaded):
 
 > *"Make me a game where a robot navigates a sewer collecting batteries."*
 
-The agent reads the orchestrator SKILL.md, follows the pipeline, invokes the sub-skills, runs the deterministic scripts, and reports success.
+The engine reads the orchestrator, runs every stage in sequence, self-corrects up to three times, and reports a working game with a live screenshot.
 
 ### Regenerate example assets
 
-Requires only `FAL_KEY` (for GPT Image 2). No Anthropic API key needed:
+Requires only `FAL_KEY` for GPT Image 2. No LLM API key needed:
 
 ```bash
 node --env-file=~/.all-skills/.env scripts/gen_game.mjs dungeon-knight
@@ -70,39 +96,14 @@ node --env-file=~/.all-skills/.env scripts/gen_game.mjs dragon-brawl
 node --env-file=~/.all-skills/.env scripts/gen_game.mjs island-quest
 node --env-file=~/.all-skills/.env scripts/gen_game.mjs sewer-bot
 node --env-file=~/.all-skills/.env scripts/gen_game.mjs pixel-town
+node --env-file=~/.all-skills/.env scripts/gen_game.mjs nova-blitz
 ```
 
 Change `'low'` to `'medium'` or `'high'` in the script for higher-quality sprites.
 
-## Skills
+## Multiplayer
 
-| Skill | Role | Image gen? |
-|---|---|---|
-| `orchestrator` | Drives pipeline, manages state | — |
-| `game-designer` | Prompt → GDD JSON | — |
-| `world-architect` | GDD → level layouts | — |
-| `sprite-artist` | Entities → sprite sheets. **GPT Image 2** or procedural. | yes |
-| `tile-artist` | Palette → tileset PNG. **GPT Image 2** or flat-color. | yes |
-| `bg-artist` | Genre theme → parallax background PNG. | yes |
-| `codesmith` | GDD + manifest → `src/scenes/Game.js` | — |
-| `playtester` | Headless Playwright + pixelmatch screenshot diff | — |
-| `refiner` | Failures → patched files | — |
-| `gap-checker` | Playability validation: static BFS + dynamic fuzzer | — |
-| `multiplayer` | Add Colyseus WebSocket server + client sync to any game (optional) | — |
-
-## Validated genres
-
-| Genre | Example | Mechanics |
-|---|---|---|
-| Action-platformer | dungeon-knight, sewer-bot | Gravity, coyote-time jump, variable jump height, sword slash / arm cannon, spike/acid hazard tiles, boss fight |
-| Beat-em-up | dragon-brawl | Pseudo-3D Y-depth movement, y-sort, one-way camera scroll, enemy wave spawner, combo hits |
-| Top-down adventure | island-quest | 8-direction normalized movement, sword knockback, chase/wander AI, tilemap collision |
-| Top-down RPG | pixel-town | 4-direction movement, NPC dialogue system, wander AI, chest pickups, y-sort depth |
-| Neon shoot-em-up | nova-blitz | Auto-fire, wave spawner, V-formation + bomber AI, combo multiplier, nova bomb, starfield, screen shake |
-
-## Optional: multiplayer
-
-Add real-time multiplayer to any generated game:
+Any generated game can be upgraded to real-time multiplayer:
 
 ```bash
 node skills/multiplayer/scripts/init_server.mjs <project-dir>   # Colyseus WebSocket server
@@ -115,42 +116,48 @@ node skills/multiplayer/scripts/init_server.mjs <project-dir> --lobby   # React 
 
 Up to 4 players, 20 Hz tick rate, TypeScript shared schemas. See [`skills/multiplayer/SKILL.md`](skills/multiplayer/SKILL.md).
 
-## Project layout
+## Engine layout
 
 ```
 game-creation-agent/
 ├── README.md
 ├── package.json
 ├── scripts/
-│   └── gen_game.mjs          # generate any example game (GPT Image 2 + inline GDD)
-├── src/                      # shared lib (sprites, state, lib)
-├── skills/                   # the skill pack
-│   ├── gameforge/            # orchestrator SKILL.md
-│   ├── game-designer/
-│   ├── world-architect/
-│   ├── sprite-artist/
-│   ├── tile-artist/
-│   ├── bg-artist/
-│   ├── codesmith/
-│   ├── playtester/
-│   ├── refiner/
-│   ├── gap-checker/
-│   └── multiplayer/          # optional Colyseus + PeerJS + React lobby
+│   ├── gen_game.mjs          # generate any example game (GPT Image 2 + inline GDD)
+│   ├── record_gif.mjs        # record gameplay GIF via headless Chromium
+│   ├── debug_library.mjs     # persistent cross-run bug/fix knowledge base
+│   └── intent_qa.mjs         # VLM screenshot scoring against original prompt
+├── src/                      # shared engine libs (sprite loading, state, utils)
+├── skills/                   # engine pipeline — one SKILL.md per stage
+│   ├── gameforge/            # orchestrator: drives the full pipeline
+│   ├── game-designer/        # prompt → GDD JSON
+│   ├── world-architect/      # GDD → level layouts
+│   ├── sprite-artist/        # entities → GPT Image 2 sprite sheets
+│   ├── tile-artist/          # palette → GPT Image 2 tileset
+│   ├── bg-artist/            # theme → parallax background
+│   ├── codesmith/            # GDD + manifest → Game.js
+│   ├── playtester/           # headless Playwright QA + VLM intent check
+│   ├── refiner/              # failures → patches → retry
+│   ├── gap-checker/          # BFS reachability + dynamic fuzzer
+│   └── multiplayer/          # Colyseus + PeerJS + React lobby (optional)
 ├── templates/phaser-game/    # per-game Phaser 3 + Vite starter
 └── examples/
-    ├── dungeon-knight/       # action-platformer with coyote-time, boss
-    ├── dragon-brawl/         # beat-em-up with pseudo-3D, wave spawner
-    ├── island-quest/         # top-down adventure with 8-dir movement
-    ├── sewer-bot/            # NES-quality platformer with arm cannon, boss spread
-    ├── pixel-town/           # Pokémon-style top-down RPG with NPC dialogue
-    ├── nova-blitz/           # neon shoot-em-up with wave AI, combos, nova bomb
-    └── screenshots/          # live headless-Chromium screenshots
+    ├── dungeon-knight/       # action-platformer: coyote-time, boss fight
+    ├── dragon-brawl/         # beat-em-up: pseudo-3D, wave spawner
+    ├── island-quest/         # top-down adventure: 8-dir movement
+    ├── sewer-bot/            # NES-style platformer: arm cannon, boss spread
+    ├── pixel-town/           # top-down RPG: NPC dialogue, y-sort
+    ├── nova-blitz/           # shoot-em-up: wave AI, combos, nova bomb
+    └── screenshots/          # live headless-Chromium captures
 ```
 
-## Optional integrations
+## API keys
 
-- **`FAL_KEY`** — fal.ai provider for **GPT Image 2** (`gpt-image-2`). Required for sprite/tile/bg generation.
-- **`OPENAI_API_KEY`** — direct OpenAI alternative for GPT Image 2. Auto-detected if `FAL_KEY` absent.
+| Key | Used for | Required? |
+|-----|----------|-----------|
+| `FAL_KEY` | GPT Image 2 sprites, tiles, backgrounds via fal.ai | For art generation |
+| `OPENAI_API_KEY` | Direct OpenAI alternative for GPT Image 2 | Auto-detected if FAL_KEY absent |
+| `ANTHROPIC_API_KEY` | VLM intent QA, NPC dialogue generation | Optional quality features |
 
 ## Credits
 

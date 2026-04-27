@@ -128,12 +128,14 @@ The engine reads the orchestrator, runs every stage in sequence, self-corrects u
 Requires only `FAL_KEY` for GPT Image 2. No LLM API key needed:
 
 ```bash
-node --env-file=~/.all-skills/.env scripts/gen_game.mjs dungeon-knight
-node --env-file=~/.all-skills/.env scripts/gen_game.mjs dragon-brawl
-node --env-file=~/.all-skills/.env scripts/gen_game.mjs island-quest
-node --env-file=~/.all-skills/.env scripts/gen_game.mjs sewer-bot
-node --env-file=~/.all-skills/.env scripts/gen_game.mjs pixel-town
-node --env-file=~/.all-skills/.env scripts/gen_game.mjs nova-blitz
+export FAL_KEY=your_fal_key_here
+
+node scripts/gen_game.mjs dungeon-knight
+node scripts/gen_game.mjs dragon-brawl
+node scripts/gen_game.mjs island-quest
+node scripts/gen_game.mjs sewer-bot
+node scripts/gen_game.mjs pixel-town
+node scripts/gen_game.mjs nova-blitz
 ```
 
 Change `'low'` to `'medium'` or `'high'` in the script for higher-quality sprites.

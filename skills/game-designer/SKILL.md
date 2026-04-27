@@ -41,6 +41,19 @@ Output ONLY a single JSON object matching this schema. No prose, no fences, no c
       "hp":     <hit points (0 = invuln/static, 1 = one-shot)>
     }
   ],
+  // NPC entities MAY include a personality block — used by gen_npc_dialogue to produce
+  // rich, character-consistent dialogue at build time via Claude Haiku:
+  // {
+  //   "id": "NPC_ELDER", "kind": "npc", ...,
+  //   "personality": {
+  //     "openness": 0.6, "conscientiousness": 0.9, "extraversion": 0.4,
+  //     "agreeableness": 0.8, "neuroticism": 0.1,
+  //     "backstory": "One sentence about who this NPC is and why they're in this town."
+  //   }
+  // }
+  // Values are 0.0–1.0 (Big-5 dimensions). backstory is used directly in the prompt.
+  // If omitted, gen_npc_dialogue uses a generic description derived from the entity desc field.
+
   "tilesetPalette": [
     { "id": "<SCREAMING_SNAKE_CASE>", "color": "<#hex>", "passable": <bool> }
   ],

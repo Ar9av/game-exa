@@ -241,6 +241,16 @@ _patrolEnemy(e, delta) {
 }
 ```
 
+## Known-pitfalls injection (from debug library)
+
+Before writing Game.js, read the top entries from the persistent debug library and treat them as hard constraints:
+
+```bash
+node scripts/debug_library.mjs --list
+```
+
+Each entry is a symptom → fix pair accumulated across past refiner runs. If the library is non-empty, prepend its entries to your mental model as "DO NOT DO X because it causes Y." This prevents codesmith from shipping bugs the refiner already solved.
+
 ## Hard rules
 
 1. **ES module syntax** — `import Phaser from 'phaser'`, `export default class`. No CJS, no TypeScript.

@@ -4,9 +4,9 @@ const PLAYER_SPEED  = 90;
 const NPC_SPEED     = 28;
 const TALK_RANGE    = 44;
 const CHESTS_TO_WIN = 5;
-const PLAYER_HP     = 0; // no combat
 
-const NPC_DIALOGUE = {
+// Built-in fallback dialogue — used when npc-dialogue.json is unavailable
+const FALLBACK_DIALOGUE = {
   NPC_GIRL:  [
     'Welcome to Verdant Town!\nI heard treasure is hidden all over!',
     'The flowers here bloom every season.\nIsn\'t it lovely?',
@@ -24,9 +24,22 @@ const NPC_DIALOGUE = {
 export default class Game extends Phaser.Scene {
   constructor() { super({ key: 'Game' }); }
 
-  init(data) { this.levelIndex = data?.levelIndex ?? 0; }
+  init(data) {
+    this.levelIndex = data?.levelIndex ?? 0;
+    this._npcDialogue = FALLBACK_DIALOGUE;
+  }
+
+  preload() {
+    // Load personality-driven dialogue generated at build time (optional)
+    this.load.json('npc-dialogue', 'data/npc-dialogue.json');
+  }
 
   create() {
+    // Swap in generated dialogue if available
+    const generated = this.cache.json.get('npc-dialogue');
+    if (generated && Object.keys(generated).length > 0) {
+      this._npcDialogue = generated;
+    }
     const manifest = this.registry.get('manifest');
     const levels   = this.registry.get('levels');
     const lvl      = levels[this.levelIndex] ?? levels[0];
@@ -198,7 +211,7 @@ export default class Game extends Phaser.Scene {
 
   _openDialogue(npc) {
     const id = npc.getData('id');
-    const lines = NPC_DIALOGUE[id] ?? ['...'];
+    const lines = this._npcDialogue[id] ?? FALLBACK_DIALOGUE[id] ?? ['...'];
     const idx = npc.getData('dialogueIdx') ?? 0;
     const text = lines[idx % lines.length];
     npc.setData('dialogueIdx', idx + 1);

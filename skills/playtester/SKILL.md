@@ -85,11 +85,31 @@ To add a scenario, append to `references/scenarios.md` and register in the runne
 }
 ```
 
+## VLM intent alignment pass
+
+After the pixelmatch scenarios pass, run a second QA pass that uses Claude Haiku to judge whether the screenshot visually matches the original description:
+
+```bash
+node scripts/intent_qa.mjs <project-dir>
+# Uses the boot scenario baseline screenshot by default.
+# Requires ANTHROPIC_API_KEY in env.
+```
+
+Returns a score 0–10. Threshold: ≥ 6 = pass. Issues found by the VLM are appended to `qa/qa-report.json` as `intent-mismatch` failures for the refiner to act on.
+
+The VLM checks: genre feel, player visibility, world rendering, entity presence. It does NOT check mechanics — only visual intent.
+
+Integrate into the full pipeline:
+```bash
+node scripts/run_qa.mjs <project-dir> && node scripts/intent_qa.mjs <project-dir>
+```
+
 ## Scripts
 
 - `scripts/run_qa.mjs <project-dir> [--url URL] [--update-baselines]` — the full runner.
 - `scripts/boot_check.mjs <project-dir> [--port N]` — minimal smoke (just `boot` scenario).
 - `scripts/diff_one.mjs <baseline.png> <actual.png> [--out diff.png]` — ad-hoc diff utility.
+- `scripts/intent_qa.mjs <project-dir> [--screenshot path]` — VLM intent alignment pass.
 
 ## References
 

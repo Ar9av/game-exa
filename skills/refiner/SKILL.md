@@ -59,10 +59,28 @@ Output ONLY a JSON object:
 - Refiner output references a file outside `src/` → reject, request resubmit.
 - Refiner output references a non-existent animation key → reject, request resubmit.
 
+## Persistent debug library
+
+After every successful fix, call `scripts/debug_library.mjs --add` to record the lesson so future generations don't repeat the same mistake:
+
+```bash
+node scripts/debug_library.mjs --add "<symptom>" "<cause>" "<one-line fix>" [genre]
+# e.g.
+node scripts/debug_library.mjs --add \
+  "Cannot read properties of null (reading 'setVelocity')" \
+  "body accessed before physics world resolves the sprite" \
+  "guard all body access with: if (!sprite.body) return;" \
+  "any"
+```
+
+The library lives at `~/.game-creation-agent/debug-library.json`. The codesmith reads the top entries on each generation to pre-empt known bugs. View library: `node scripts/debug_library.mjs --list`.
+
 ## Scripts
 
 - `scripts/collect_files.mjs <project-dir>` — emits all `.js`/`.mjs` under `src/` with contents.
 - `scripts/apply_fixes.mjs <project-dir> <fixes-json>` — safety-checked file writer.
+- `scripts/debug_library.mjs --add <symptom> <cause> <fix> [genre]` — record a fix.
+- `scripts/debug_library.mjs --list` — view all entries sorted by hit count.
 
 ## References
 

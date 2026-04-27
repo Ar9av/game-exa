@@ -61,9 +61,20 @@ Single JSON array. Each element:
 
 See `references/level-examples.md` for a 16×12 top-down level and a 22×12 platformer level (used by the playtester fixtures).
 
+## NPC dialogue (RPG genre)
+
+For `top-down-rpg` games, after levels are written, run the NPC dialogue generator. It reads NPC entity personality fields from the GDD and generates 6-8 dialogue lines per NPC using Claude Haiku, writing them to `public/data/npc-dialogue.json`:
+
+```bash
+node --env-file=~/.all-skills/.env scripts/gen_npc_dialogue.mjs <project-dir>
+```
+
+Game.js loads this file at runtime and falls back to built-in lines if absent. The personality block on each NPC entity drives the dialogue style — ensure the game-designer includes it for best results.
+
 ## Scripts
 
 - `scripts/validate_levels.mjs <levels-file> <gdd-file>` — fails non-zero with reason if invalid.
+- `scripts/gen_npc_dialogue.mjs <project-dir>` — generates NPC dialogue from personality (RPG).
 
 ## References
 

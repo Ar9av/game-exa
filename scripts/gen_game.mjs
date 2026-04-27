@@ -16,6 +16,7 @@ import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { generateSprites, generateTilesetGPT } from '../src/lib/sprites.js';
+import { generateNpcDialogue } from './gen_npc_dialogue.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -461,18 +462,33 @@ const PIXEL_TOWN_GDD = {
       color: 'pink dress brown pigtails',
       desc: 'Young girl NPC, Pokemon-style: pink dress, brown hair in pigtails, friendly face, simple pixel art sprite',
       states: ['idle', 'walk'], speed: 28, hp: 0,
+      personality: {
+        openness: 0.8, conscientiousness: 0.5, extraversion: 0.9,
+        agreeableness: 0.85, neuroticism: 0.15,
+        backstory: 'A cheerful flower merchant\'s daughter who grew up in Verdant Town and knows every secret path through the flower patches.',
+      },
     },
     {
       id: 'NPC_BOY', kind: 'npc',
       color: 'blue shirt dark hair',
       desc: 'Young boy NPC, Pokemon-style: blue shirt, dark hair, simple cheerful face, pixel art sprite',
       states: ['idle', 'walk'], speed: 32, hp: 0,
+      personality: {
+        openness: 0.7, conscientiousness: 0.4, extraversion: 0.75,
+        agreeableness: 0.6, neuroticism: 0.3,
+        backstory: 'An adventurous kid who spends all day exploring the town and claims to have found three of the five legendary chests already.',
+      },
     },
     {
       id: 'NPC_ELDER', kind: 'npc',
       color: 'gray robe white hair',
       desc: 'Elderly NPC, Pokemon-style: gray robe, white hair, kind wrinkled face, wooden walking staff, pixel art sprite',
       states: ['idle', 'walk'], speed: 18, hp: 0,
+      personality: {
+        openness: 0.6, conscientiousness: 0.9, extraversion: 0.4,
+        agreeableness: 0.8, neuroticism: 0.1,
+        backstory: 'The town historian who has lived in Verdant Town for 70 years and remembers when the five legendary chests were first hidden by the town founders.',
+      },
     },
     {
       id: 'CHEST', kind: 'pickup',
@@ -685,7 +701,18 @@ async function main() {
   const levels = makeLevels();
   await writeFile(join(dataDir, 'levels.json'), JSON.stringify(levels, null, 2));
 
-  // 7 ── Update game-state
+  // 7 ── NPC dialogue (RPG genres with NPC entities)
+  const hasNpcs = gdd.entities.some(e => e.kind === 'npc');
+  if (hasNpcs && process.env.ANTHROPIC_API_KEY) {
+    console.log(`[${gameName}] → NPC dialogue (Claude Haiku)...`);
+    try {
+      await generateNpcDialogue({ projectDir, log: (m) => console.log(`  ${m}`) });
+    } catch (err) {
+      console.warn(`  ⚠ NPC dialogue failed: ${err.message} — game will use built-in fallback lines`);
+    }
+  }
+
+  // 8 ── Update game-state
   state.levels = levels;
   state.assets = { sprites: manifest.sprites, tiles: manifest.tiles, bg: bgMeta };
   await writeFile(resolve(projectDir, 'game-state.json'), JSON.stringify(state, null, 2) + '\n');

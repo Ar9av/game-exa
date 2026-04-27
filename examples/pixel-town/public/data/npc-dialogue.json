@@ -1,0 +1,14 @@
+{
+  "NPC_GIRL": [
+    "Hello, traveller!",
+    "This town is full of secrets!"
+  ],
+  "NPC_BOY": [
+    "Hey! You're exploring too?",
+    "I heard there are hidden chests nearby!"
+  ],
+  "NPC_ELDER": [
+    "Welcome, young one.",
+    "This town holds great treasure for those who seek it."
+  ]
+}

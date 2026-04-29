@@ -80,8 +80,13 @@ flowchart TD
 | **sprite-artist** | Every entity → a GPT Image 2 pixel-art sprite sheet (walk/idle/attack frames). Procedural fallback if no API key. |
 | **tile-artist** | Environment palette → GPT Image 2 tileset PNG |
 | **bg-artist** | Genre + mood → multi-layer parallax background PNG |
+| **audio-composer** | Genre → SFX + music loop. ElevenLabs MP3s when `ELEVENLABS_API_KEY` is set; chiptune oscillators otherwise. Writes `AudioManager.js`. |
+| **palette-enforcer** | Quantizes all generated PNGs to a named 8-bit palette (PICO-8, Sweetie-16, Endesga-32, Game Boy, NES). Runs after art, before codesmith. |
 | **codesmith** | GDD + asset manifest → complete `src/scenes/Game.js` with physics, AI, HUD, win/lose flow |
-| **playtester** | Headless Playwright boots the game, captures screenshots, pixelmatch diff, VLM intent scoring |
+| **manifest-auditor** | Statically cross-references every animation/texture key in `Game.js` against `manifest.json`. Catches silent Phaser failures before a browser opens. |
+| **mobile-compat-checker** | 5-item mobile lint: `roundPixels`, `image-rendering: pixelated` CSS, `devicePixelRatio`, touch input, AudioContext unlock. Auto-patches first two. |
+| **parallel-qa-orchestra** | Runs 4 QA workers concurrently (static analysis, golden-path, fuzzer, physics-debug). Replaces serial playtester→gap-checker. ~30s vs ~2 min. |
+| **physics-debug-validator** | Boots game with Phaser arcade debug enabled, screenshots all physics bodies, emits hitbox alignment report. Catches invisible collision bugs. |
 | **gap-checker** | Playability validation: static BFS reachability + dynamic input fuzzer. Fails build if level is unwinnable. |
 | **refiner** | Reads playtester/gap-checker failures, patches the broken file, hands back to playtester (max 3 retries) |
 | **multiplayer** | Generates a Colyseus WebSocket server + patches Game.js for real-time sync. Optional. |
@@ -140,6 +145,30 @@ node scripts/gen_game.mjs nova-blitz
 
 Change `'low'` to `'medium'` or `'high'` in the script for higher-quality sprites.
 
+## Audio
+
+Every generated game gets a two-tier audio system — no extra setup required.
+
+### Tier 1 — Chiptune oscillators (free, zero dependencies)
+
+The default. Genre-appropriate SFX descriptors and a pentatonic music loop are written to `sfx.json` and `music.json`. All sound is synthesised at runtime by `AudioManager.js` using Web Audio `OscillatorNode` — no audio files, works offline.
+
+### Tier 2 — ElevenLabs AI sound effects (optional upgrade)
+
+Set `ELEVENLABS_API_KEY` before running `audio-composer` and it calls the [ElevenLabs text-to-sound-effects API](https://elevenlabs.io/docs/api-reference/text-to-sound-effects/convert) to generate a real MP3 for every SFX action. Each sound uses a genre-flavoured text prompt (e.g. `"2D action platformer game, retro 8-bit jump sound, quick upward pitch sweep"`).
+
+MP3s land in `public/assets/sfx/` and are referenced in `sfx.json` as `mp3Path`. `AudioManager.js` preloads them as `AudioBuffer`s on first user interaction (Safari-safe) and plays the MP3 when available, silently falling back to the oscillator if a file fails to load.
+
+```bash
+export ELEVENLABS_API_KEY=your_key_here
+node skills/audio-composer/scripts/compose_audio.mjs <project-dir>
+
+# Force oscillator mode even if key is set:
+node skills/audio-composer/scripts/compose_audio.mjs <project-dir> --no-elevenlabs
+```
+
+`AudioManager.play('jump')` works identically in both tiers — no Game.js changes needed when switching modes.
+
 ## Multiplayer
 
 Any generated game can be upgraded to real-time multiplayer:
@@ -167,18 +196,24 @@ game-creation-agent/
 │   ├── debug_library.mjs     # persistent cross-run bug/fix knowledge base
 │   └── intent_qa.mjs         # VLM screenshot scoring against original prompt
 ├── src/                      # shared engine libs (sprite loading, state, utils)
-├── skills/                   # engine pipeline — one SKILL.md per stage
-│   ├── gameforge/            # orchestrator: drives the full pipeline
-│   ├── game-designer/        # prompt → GDD JSON
-│   ├── world-architect/      # GDD → level layouts
-│   ├── sprite-artist/        # entities → GPT Image 2 sprite sheets
-│   ├── tile-artist/          # palette → GPT Image 2 tileset
-│   ├── bg-artist/            # theme → parallax background
-│   ├── codesmith/            # GDD + manifest → Game.js
-│   ├── playtester/           # headless Playwright QA + VLM intent check
-│   ├── refiner/              # failures → patches → retry
-│   ├── gap-checker/          # BFS reachability + dynamic fuzzer
-│   └── multiplayer/          # Colyseus + PeerJS + React lobby (optional)
+├── skills/                        # engine pipeline — one SKILL.md per stage
+│   ├── gameforge/                 # orchestrator: drives the full pipeline
+│   ├── game-designer/             # prompt → GDD JSON
+│   ├── world-architect/           # GDD → level layouts
+│   ├── sprite-artist/             # entities → GPT Image 2 sprite sheets
+│   ├── tile-artist/               # palette → GPT Image 2 tileset
+│   ├── bg-artist/                 # theme → parallax background
+│   ├── audio-composer/            # genre → SFX + music (ElevenLabs or oscillator)
+│   ├── palette-enforcer/          # PNG → named 8-bit palette quantization
+│   ├── codesmith/                 # GDD + manifest → Game.js
+│   ├── manifest-auditor/          # static anim/texture key cross-reference
+│   ├── mobile-compat-checker/     # 5-item mobile lint + auto-patch
+│   ├── parallel-qa-orchestra/     # 4 concurrent QA workers, merged report
+│   ├── physics-debug-validator/   # hitbox alignment via Phaser debug mode
+│   ├── playtester/                # headless Playwright QA + VLM intent check
+│   ├── refiner/                   # failures → patches → retry
+│   ├── gap-checker/               # BFS reachability + dynamic fuzzer
+│   └── multiplayer/               # Colyseus + PeerJS + React lobby (optional)
 ├── templates/phaser-game/    # per-game Phaser 3 + Vite starter
 └── examples/
     ├── dungeon-knight/       # action-platformer: coyote-time, boss fight
@@ -197,6 +232,7 @@ game-creation-agent/
 | `FAL_KEY` | GPT Image 2 sprites, tiles, backgrounds via fal.ai | For art generation |
 | `OPENAI_API_KEY` | Direct OpenAI alternative for GPT Image 2 | Auto-detected if FAL_KEY absent |
 | `ANTHROPIC_API_KEY` | VLM intent QA, NPC dialogue generation | Optional quality features |
+| `ELEVENLABS_API_KEY` | AI-generated MP3 sound effects via ElevenLabs text-to-sound API | Optional — chiptune fallback used if absent |
 
 ## Credits
 

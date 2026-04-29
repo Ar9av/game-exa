@@ -251,6 +251,39 @@ node scripts/debug_library.mjs --list
 
 Each entry is a symptom → fix pair accumulated across past refiner runs. If the library is non-empty, prepend its entries to your mental model as "DO NOT DO X because it causes Y." This prevents codesmith from shipping bugs the refiner already solved.
 
+## Audio integration
+
+If `state.audio` is set in `game-state.json`, add these to Game.js:
+
+```js
+import AudioManager from '../audio/AudioManager.js';
+
+// In create(), after all entity setup:
+AudioManager.init(this);
+
+// In pickup overlap callbacks:
+AudioManager.play('pickup');
+
+// In damage callbacks:
+AudioManager.play('hit');
+
+// In player death handler:
+AudioManager.play('death');
+AudioManager.stopMusic();
+
+// In jump input handler (platformer):
+AudioManager.play('jump');
+
+// In shoot/fire handler:
+AudioManager.play('shoot');
+
+// In win-condition handler:
+AudioManager.play('win');
+AudioManager.stopMusic();
+```
+
+`AudioManager` handles Safari AudioContext unlock automatically via the first user gesture. Never call it before `AudioManager.init(this)` runs.
+
 ## Hard rules
 
 1. **ES module syntax** — `import Phaser from 'phaser'`, `export default class`. No CJS, no TypeScript.

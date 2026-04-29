@@ -17,24 +17,48 @@ Drives the full game-creation pipeline. The host agent (you) is the one calling 
 ## Pipeline
 
 ```
-description ─▶ game-designer ─▶ world-architect ─▶ sprite-artist ┐
-                                                  tile-artist    ├─▶ codesmith ─▶ playtester ─▶ refiner ─▶ playtester
-                                                  bg-artist      ┘                                ▲
-                                                                                                   │ (bounded retry, max 3)
+description
+    ↓
+game-designer  →  GDD + style.palette + levelHints
+    ↓
+world-architect  →  levels.json
+    ↓
+┌──────────────┬──────────────┬──────────────┬──────────────┐
+sprite-artist   tile-artist    bg-artist      audio-composer  ← parallel
+└──────────────┴──────────────┴──────────────┴──────────────┘
+    ↓
+palette-enforcer  ← quantize all PNGs to chosen 8-bit palette
+    ↓
+codesmith  →  src/scenes/Game.js  (imports AudioManager when state.audio is set)
+    ↓
+manifest-auditor   →  catches anim/texture key mismatches (fast, no browser)
+mobile-compat-checker --fix  →  auto-patches roundPixels + image-rendering CSS
+    ↓
+parallel-qa-orchestra  →  4 workers concurrently:
+  ├── static (BFS reachability, border, jump arcs)
+  ├── golden-path (boot, walk, jump, attack, win scenarios)
+  ├── fuzzer (stuck, spawn-trap, no-progress, NaN)
+  └── physics-debug (hitbox alignment)
+    ↓
+VLM intent gate  ← host agent reviews screenshot vs original description
+    ↓ pass
+  Ship  ←— refiner (loop, max 3) ←— fail
 ```
 
-1. **game-designer** turns prompt → `gdd.json` (GDD JSON).
+1. **game-designer** turns prompt → GDD JSON (includes `style.palette` auto-selection by genre).
 2. **world-architect** turns GDD → `levels.json` (tile-based level layouts).
 3. **sprite-artist** turns GDD entities → sprite sheets + manifest. Uses **GPT Image 2** (`gpt-image-2`) by default at `quality: low`.
-4. **tile-artist** turns GDD tile palette → `tiles.png` + tile metadata. GPT Image 2 mode produces real pixel-art tiles; procedural mode is the free fallback.
-5. **bg-artist** generates a parallax background image (sky, cave, space, forest, etc.) via GPT Image 2. Optional — skipped for genres that don't benefit (top-down-adventure, abstract puzzle).
-6. **codesmith** turns GDD + levels + manifest → `src/scenes/Game.js` (and optional helpers).
-7. **playtester** boots the game, runs scenarios, captures screenshots, diffs against baselines, returns structured failures.
-8. **refiner** consumes failures + current source → patched files. Loop back to playtester. Cap at 3 iterations.
+4. **tile-artist** turns GDD tile palette → `tiles.png` + tile metadata.
+5. **bg-artist** generates a parallax background image. Optional — skipped for top-down-adventure, abstract puzzle.
+6. **audio-composer** generates `sfx.json`, `music.json`, and `AudioManager.js` from genre presets. Runs in parallel with art stages 3–5.
+7. **palette-enforcer** quantizes all generated PNGs to a named 8-bit palette (e.g. pico8, sweetie-16, endesga-32) for visual coherence.
+8. **codesmith** turns GDD + levels + manifest → `src/scenes/Game.js`. Imports `AudioManager` and calls `AudioManager.init(this)` in `create()` when `state.audio` is set.
+9. **manifest-auditor** cross-references every animation/texture key in Game.js against manifest.json. Feeds mismatches to refiner before any browser is opened.
+10. **mobile-compat-checker** (with `--fix`) auto-patches `roundPixels: true` and `image-rendering: pixelated` CSS; flags touch-input and audio-unlock gaps for refiner.
+11. **parallel-qa-orchestra** replaces the serial playtester→gap-checker chain. Runs 4 workers concurrently; merges into one failure list for the refiner.
+12. **refiner** consumes failures + current source → patched files. Loop back to parallel-qa-orchestra. Cap at 3 iterations.
 
-Stages 3, 4, 5 are deterministic helpers (image generation is delegated to the model; the skill's logic — chunking, dimensions, chroma-key, manifest write — is pure). Stages 1, 2, 6, 8 are LLM-driven via host-agent reasoning. Stage 7 is deterministic.
-
-Stages 3, 4, 5 can run in parallel (independent inputs).
+Stages 3, 4, 5, 6 can run in parallel (independent inputs). Stage 7 is a fan-in (all art must be done first). Stages 9 and 10 are fast linting passes (no browser).
 
 ## Shared state — `game-state.json`
 

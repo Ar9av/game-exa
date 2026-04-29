@@ -38,7 +38,7 @@ const sfxKeys = GENRE_SFX[genre] ?? Object.keys(SFX_PRESETS);
 const sfx = Object.fromEntries(sfxKeys.map((k) => [k, SFX_PRESETS[k]]));
 
 // Music note frequencies (Hz) — C major pentatonic
-const C4=261.63, D4=293.66, E4=329.63, G4=392.00, A4=440.00,
+const C4=261.63, D4=293.66, E4=329.63, F4=349.23, G4=392.00, A4=440.00,
       C5=523.25, D5=587.33, E5=659.25, G5=783.99;
 const REST = 0;
 
@@ -58,7 +58,7 @@ const MUSIC_PRESETS = {
     notes: [
       {freq:C4,beats:1},{freq:E4,beats:1},{freq:G4,beats:2},
       {freq:A4,beats:1},{freq:G4,beats:1},{freq:E4,beats:2},
-      {freq:D4,beats:1},{freq:F4??349.23,beats:1},{freq:G4,beats:2},
+      {freq:D4,beats:1},{freq:F4,beats:1},{freq:G4,beats:2},
       {freq:C5,beats:2},{freq:REST,beats:2},
     ],
   },

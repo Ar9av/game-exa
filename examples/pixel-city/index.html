@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>pixelworld</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #f4f1ea; }
+  canvas { display: block; }
+  #hud {
+    position: fixed; left: 12px; bottom: 12px;
+    font: 12px/1.5 ui-monospace, Menlo, monospace;
+    color: #555; background: rgba(255,255,255,.85);
+    padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd;
+    user-select: none; pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">WASD / arrows — move &nbsp;·&nbsp; drag — pan &nbsp;·&nbsp; wheel or +/− — zoom &nbsp;·&nbsp; F — follow me</div>
+<script src="main.js"></script>
+</body>
+</html>

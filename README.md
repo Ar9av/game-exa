@@ -16,6 +16,7 @@ Six complete games, generated end-to-end. Screenshots captured live from headles
 | **Sewer Bot** — Scrappy maintenance robot navigates toxic sewers collecting power cells while battling mechanical vermin | Action-platformer (NES) | ![sewer-bot](examples/screenshots/sewer-bot.png) |
 | **Pixel Town** — Trainer explores a Pokémon-inspired village, talking to locals and finding five hidden treasure chests | Top-down RPG | ![pixel-town](examples/screenshots/pixel-town.png) |
 | **Nova Blitz** — Pilot a neon cyan starfighter through waves of massive alien ships, build combos and drop screen-clearing nova bombs | Neon shoot-em-up | ![nova-blitz](examples/screenshots/nova-blitz.gif) |
+| **Pixel City** — Living isometric SF-inspired city: painted-lady row houses, glass towers, a clock-tower park, cars and locals going about their day, you free to wander | Iso living world | ![pixel-city](examples/screenshots/pixel-city.jpg) |
 
 Each ships with full source, GPT Image 2 sprite sheets, level data, and `game-state.json`. Play any of them immediately:
 

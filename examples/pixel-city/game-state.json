@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "name": "pixel-city",
+  "prompt": "A living isometric pixel-art city inspired by SF: painted-lady row houses, glass towers, a clock-tower park, cars on the boulevards, wandering locals with speech bubbles — and you, free to walk anywhere",
+  "genre": "iso-living-world",
+  "createdAt": "2026-08-02T00:00:00.000Z",
+  "gdd": {
+    "title": "Pixel City",
+    "genre": "iso-living-world",
+    "tagline": "A living isometric city you can wander",
+    "loop": "Walk the boulevards, watch locals and cars go about their day. Ambient world — no fail state.",
+    "winCondition": "false",
+    "loseCondition": "false",
+    "controls": {
+      "movement": "isometric-4dir",
+      "actions": [
+        { "key": "F", "name": "Follow", "description": "Re-center camera on the player" },
+        { "key": "+/-", "name": "Zoom", "description": "Zoom the camera" }
+      ]
+    },
+    "entities": [
+      { "id": "PLAYER", "kind": "player", "sprite": "assets/player/walk_*.png" },
+      { "id": "LOCAL", "kind": "npc", "count": 14, "sprite": "assets/npc/walk_*.png", "behavior": "wander-bfs + emoji bubbles" },
+      { "id": "CAR", "kind": "ambient", "count": 6, "sprite": "assets/props/car_0.png", "behavior": "shuttle along boulevards" }
+    ],
+    "world": {
+      "grid": [24, 24],
+      "projection": "2:1 dimetric, TW=64 TH=32",
+      "districts": ["residential painted-ladies", "downtown towers", "park with clock tower", "bay corner"],
+      "landmarks": [
+        { "sprite": "pyramid", "at": [13, 13] },
+        { "sprite": "clock", "at": [8, 8] }
+      ]
+    },
+    "assetPipeline": "meshroom.top /api/v1/generate — see scripts/poll_gen.py + scripts/deckerboard.py and skills/iso-living-world/SKILL.md"
+  }
+}

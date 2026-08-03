@@ -1,0 +1,14 @@
+{
+  "name": "pixel-city",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite --port 5173",
+    "build": "vite build",
+    "preview": "vite preview --port 4173"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "name": "iso-city-builder",
+  "prompt": "An isometric city-builder in the style of SimCity: zone residential/commercial/industrial land, draw roads, watch buildings grow or abandon as demand shifts, cars routing over whatever network you build",
+  "genre": "iso-city-builder",
+  "createdAt": "2026-08-17T00:00:00.000Z",
+  "gdd": {
+    "title": "Iso City Builder",
+    "genre": "iso-city-builder",
+    "tagline": "Zone it, road it, watch it grow",
+    "loop": "Paint zones and roads with money you have. Buildings spawn on zoned tiles with road access and grow (or abandon) each tick based on demand. No fail state — a running simulation.",
+    "winCondition": "false",
+    "loseCondition": "false",
+    "controls": {
+      "movement": "camera pan (drag) + zoom (wheel)",
+      "actions": [
+        { "key": "1-6", "name": "Select tool", "description": "Pan / Road / Residential / Commercial / Industrial / Bulldoze" },
+        { "key": "click / drag", "name": "Paint", "description": "Apply the selected tool to tiles under the cursor" }
+      ]
+    },
+    "entities": [
+      { "id": "BUILDING", "kind": "grown", "behavior": "spawns on zoned+road-accessible tiles, grows/abandons per demand" },
+      { "id": "CAR", "kind": "ambient", "count": 10, "sprite": "assets/props/car_0.png", "behavior": "BFS-routes over the live road network" },
+      { "id": "PEDESTRIAN", "kind": "ambient", "sprite": "assets/npc/walk_*.png", "behavior": "spawns near buildings as population grows, wanders roads" }
+    ],
+    "world": {
+      "grid": [28, 28],
+      "projection": "2:1 dimetric, TW=64 TH=32",
+      "start": "mostly empty grid with a seed plus-shaped avenue and one starter house"
+    },
+    "assetPipeline": "reuses examples/pixel-city sprites — same asset economy per skills/iso-city-builder/SKILL.md"
+  }
+}

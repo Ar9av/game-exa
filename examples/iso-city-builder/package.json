@@ -1,0 +1,14 @@
+{
+  "name": "iso-city-builder",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite --port 5174",
+    "build": "vite build",
+    "preview": "vite preview --port 4174"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  }
+}

@@ -17,11 +17,12 @@ Six complete games, generated end-to-end. Screenshots captured live from headles
 | **Pixel Town** — Trainer explores a Pokémon-inspired village, talking to locals and finding five hidden treasure chests | Top-down RPG | ![pixel-town](examples/screenshots/pixel-town.png) |
 | **Nova Blitz** — Pilot a neon cyan starfighter through waves of massive alien ships, build combos and drop screen-clearing nova bombs | Neon shoot-em-up | ![nova-blitz](examples/screenshots/nova-blitz.gif) |
 | **Pixel City** — Living isometric SF-inspired city: painted-lady row houses, glass towers, a clock-tower park, cars and locals going about their day, you free to wander | Iso living world | ![pixel-city](examples/screenshots/pixel-city.jpg) |
+| **Iso City Builder** — Zone residential/commercial/industrial land, draw roads, and watch buildings grow (or abandon) as demand shifts, with cars routing over whatever network you build | Iso city builder | ![iso-city-builder](examples/screenshots/iso-city-builder.jpg) |
 
 Each ships with full source, GPT Image 2 sprite sheets, level data, and `game-state.json`. Play any of them immediately:
 
 ```bash
-cd examples/nova-blitz   # or dungeon-knight / dragon-brawl / island-quest / sewer-bot / pixel-town
+cd examples/nova-blitz   # or dungeon-knight / dragon-brawl / island-quest / sewer-bot / pixel-town / pixel-city / iso-city-builder
 npm install
 npm run dev              # opens http://127.0.0.1:5173
 ```

@@ -23,6 +23,10 @@ function mulberry32(a) {
 }
 const rng = mulberry32(2026);
 
+// utilities: a tile beyond the starter tier only grows once it falls inside BOTH
+// a power plant's and a water tower's coverage radius (see SKILL.md "utilities gate")
+const POWER_RADIUS = 9, WATER_RADIUS = 9;
+
 // ---------- tool table (drives palette UI + placement cost/effect) ----------
 const TOOLS = [
   { id: 'select', label: 'Pan', ic: '\u{1F5B1}', cost: 0, kind: 'select' },
@@ -30,17 +34,20 @@ const TOOLS = [
   { id: 'residential', label: 'Res', ic: '\u{1F3E0}', cost: 5, kind: 'zone', zoneType: 'residential' },
   { id: 'commercial', label: 'Com', ic: '\u{1F3EA}', cost: 5, kind: 'zone', zoneType: 'commercial' },
   { id: 'industrial', label: 'Ind', ic: '\u{1F3ED}', cost: 5, kind: 'zone', zoneType: 'industrial' },
+  { id: 'power', label: 'Power', ic: '⚡', cost: 300, kind: 'utility', utilityType: 'power' },
+  { id: 'water', label: 'Water', ic: '\u{1F4A7}', cost: 250, kind: 'utility', utilityType: 'water' },
   { id: 'bulldoze', label: 'Clear', ic: '\u{1F528}', cost: 0, kind: 'bulldoze' },
 ];
 let currentTool = 'road';
 
 // ---------- tile grid ----------
 // each tile: { zone: 'none'|'residential'|'commercial'|'industrial', road: bool,
-//              building: null | {level:number, abandoned:bool}, landValue: number }
+//              utility: null|'power'|'water', powered: bool, watered: bool,
+//              building: null | {level:number, abandoned:bool, blocked:bool}, landValue: number }
 const tiles = [];
 for (let y = 0; y < N; y++) {
   const row = [];
-  for (let x = 0; x < N; x++) row.push({ zone: 'none', road: false, building: null, landValue: 0 });
+  for (let x = 0; x < N; x++) row.push({ zone: 'none', road: false, utility: null, powered: false, watered: false, building: null, landValue: 0 });
   tiles.push(row);
 }
 const key = (x, y) => x + ',' + y;
@@ -52,16 +59,7 @@ const MID = N >> 1;
 for (let i = 0; i < N; i++) { tiles[MID][i].road = true; tiles[i][MID].road = true; }
 // one starter house so the city isn't dead silent at t=0
 tiles[MID - 2][MID - 1].zone = 'residential';
-tiles[MID - 2][MID - 1].building = { level: 0, abandoned: false };
-
-function roadNeighborMask(x, y) {
-  let m = 0;
-  if (tileAt(x, y - 1)?.road) m |= 1;   // N
-  if (tileAt(x + 1, y)?.road) m |= 2;   // E
-  if (tileAt(x, y + 1)?.road) m |= 4;   // S
-  if (tileAt(x - 1, y)?.road) m |= 8;   // W
-  return m;
-}
+tiles[MID - 2][MID - 1].building = { level: 0, abandoned: false, hue: 20 };
 
 // growth gate: BFS (depth<=8) through same-zone/empty-zoned tiles until a road is touched
 function hasRoadAccess(x, y, zoneType) {
@@ -150,13 +148,34 @@ function landValueFor(x, y) {
   return 30 + rng() * 20;
 }
 
+// power/water coverage: simple radius flood from any placed utility tile — the
+// player has to actually place and spread plants/towers to unlock growth beyond
+// the starter tier (see skills/iso-city-builder/SKILL.md "utilities gate")
+function updateUtilityCoverage() {
+  const powerSrc = [], waterSrc = [];
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const t = tiles[y][x];
+    if (t.utility === 'power') powerSrc.push([x, y]);
+    else if (t.utility === 'water') waterSrc.push([x, y]);
+  }
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const t = tiles[y][x];
+    t.powered = powerSrc.some(([sx, sy]) => Math.max(Math.abs(sx - x), Math.abs(sy - y)) <= POWER_RADIUS);
+    t.watered = waterSrc.some(([sx, sy]) => Math.max(Math.abs(sx - x), Math.abs(sy - y)) <= WATER_RADIUS);
+  }
+}
+
 function simTick() {
-  // 1) let zoned-but-empty tiles attempt to spawn a building
+  updateUtilityCoverage();
+  // 1) let zoned-but-empty tiles attempt to spawn a building (starter tier never needs utilities)
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
     const t = tiles[y][x];
     if (t.zone === 'none' || t.building) continue;
     if (econ.demand[t.zone] > -10 && hasRoadAccess(x, y, t.zone) && rng() < 0.03) {
-      t.building = { level: 0, abandoned: false };
+      // hue variety so repeated sprites (only ~7 building images total) don't read as clones —
+      // wide swing for houses (painted-ladies range), narrower for shops/cafes, none for industrial
+      const hueRange = t.zone === 'residential' ? 150 : t.zone === 'commercial' ? 40 : 0;
+      t.building = { level: 0, abandoned: false, blocked: false, hue: hueRange ? Math.round(rng() * hueRange * 2 - hueRange) : 0 };
       t.landValue = landValueFor(x, y);
     }
   }
@@ -168,19 +187,27 @@ function simTick() {
     const demand = econ.demand[t.zone] ?? 0;
     if (!t.landValue) t.landValue = landValueFor(x, y);
     if (t.building.abandoned) {
-      const recoverChance = Math.min(0.08, 0.03 + Math.max(0, demand - 30) / 1000);
-      if (rng() < recoverChance) t.building.abandoned = false;
+      // reference: an abandoned building clears back to bare zoned land at good demand
+      // and a fresh one respawns through the normal spawn path above, rather than
+      // un-abandoning in place
+      const clearChance = demand > 10 ? Math.min(0.12, (demand - 10) / 600) : 0;
+      if (rng() < clearChance) t.building = null;
     } else {
       const demandBoost = Math.max(0, (demand - 30) / 70) * 0.7;
       const coverage = 20; // no service buildings in this MVP; flat baseline
-      const target = t.landValue / 24 + coverage / 28 + Math.min(20, t.building.level * 4) / 60 + demandBoost;
-      t.building.level += (Math.min(4, Math.max(0, target)) - t.building.level) * 0.08;
+      const uncapped = t.landValue / 24 + coverage / 28 + Math.min(20, t.building.level * 4) / 60 + demandBoost;
+      // starter tier (<1) is always free to reach; anything past it needs power+water
+      const serviced = t.powered && t.watered;
+      const cap = serviced ? 4 : 0.99;
+      t.building.blocked = !serviced && uncapped > cap + 0.05;
+      const target = Math.min(cap, Math.max(0, uncapped));
+      t.building.level += (target - t.building.level) * 0.08;
       if (demand < -20) {
         const abandonChance = Math.min(0.02, 0.005 + (-demand - 20) / 2000);
         if (rng() < abandonChance) t.building.abandoned = true;
       }
     }
-    if (!t.building.abandoned) {
+    if (t.building && !t.building.abandoned) {
       const lvl = Math.floor(Math.min(4, Math.max(0, t.building.level)));
       if (t.zone === 'residential') population += (lvl + 1) * 4;
       else jobs += (lvl + 1) * 3;
@@ -252,17 +279,21 @@ function paintTile(x, y) {
   const tool = toolDef(currentTool);
   if (tool.kind === 'select') return;
   if (tool.kind === 'bulldoze') {
-    t.zone = 'none'; t.road = false; t.building = null;
+    t.zone = 'none'; t.road = false; t.utility = null; t.building = null;
     return;
   }
   if (tool.cost > econ.money) { toast('Not enough money'); return; }
   if (tool.kind === 'road') {
     if (t.road) return;
-    t.road = true; t.zone = 'none'; t.building = null;
+    t.road = true; t.zone = 'none'; t.utility = null; t.building = null;
     econ.money -= tool.cost; updateHud();
   } else if (tool.kind === 'zone') {
-    if (t.road || t.zone === tool.zoneType) return;
+    if (t.road || t.utility || t.zone === tool.zoneType) return;
     t.zone = tool.zoneType; t.building = null;
+    econ.money -= tool.cost; updateHud();
+  } else if (tool.kind === 'utility') {
+    if (t.road || t.utility === tool.utilityType) return;
+    t.road = false; t.zone = 'none'; t.building = null; t.utility = tool.utilityType;
     econ.money -= tool.cost; updateHud();
   }
 }
@@ -271,7 +302,10 @@ function paintTile(x, y) {
 const cars = [];
 for (let i = 0; i < 10; i++) {
   const [x, y] = randomRoadTile();
-  cars.push({ gx: x, gy: y, path: [], pathI: 0, speed: CAR_SPEED * (0.85 + rng() * 0.3), hue: Math.round(rng() * 300 - 150), facing: 1 });
+  // laneOffset nudges the car sideways off the tile centerline at draw time only —
+  // without it, multiple cars sharing a road tile render stacked directly on top of
+  // each other (a visible pileup rather than traffic)
+  cars.push({ gx: x, gy: y, path: [], pathI: 0, speed: CAR_SPEED * (0.85 + rng() * 0.3), hue: Math.round(rng() * 300 - 150), facing: 1, laneOffset: (i % 2 === 0 ? -1 : 1) * (0.14 + rng() * 0.1) });
 }
 function retargetCar(c) {
   const [tx, ty] = randomRoadTile();
@@ -374,8 +408,10 @@ canvas.addEventListener('wheel', e => {
 }, { passive: false });
 addEventListener('keydown', e => {
   const k = e.key;
-  if (k >= '1' && k <= '6') selectTool(TOOLS[+k - 1]?.id || currentTool);
+  if (k >= '1' && k <= '8') selectTool(TOOLS[+k - 1]?.id || currentTool);
+  if (k.toLowerCase() === 'v') { showCoverage = !showCoverage; toast(showCoverage ? 'Coverage overlay on' : 'Coverage overlay off'); }
 });
+let showCoverage = false;
 
 // ---------- assets ----------
 function loadImg(src) { const im = new Image(); im.src = src; return im; }
@@ -404,6 +440,45 @@ function diamond(cx, cy, w, h) {
 }
 const ZONE_TINT = { none: null, residential: 'rgba(120,180,110,.28)', commercial: 'rgba(110,150,210,.28)', industrial: 'rgba(210,170,90,.28)' };
 
+// edge T-R faces the N neighbor, R-B faces E, B-L faces S, L-T faces W (derived from
+// the iso projection: iso(x,y-1) lands exactly on the T-R edge's outward direction, etc)
+const EDGE_FOR_DIR = { N: 'TR', E: 'RB', S: 'BL', W: 'LT' };
+function drawRoadTile(x, y, cx, cy) {
+  diamond(cx, cy, TW, TH);
+  ctx.fillStyle = '#8f877e'; ctx.fill();
+  const C = { T: [cx, cy - TH / 2], R: [cx + TW / 2, cy], B: [cx, cy + TH / 2], L: [cx - TW / 2, cy] };
+  const inset = p => [cx + (p[0] - cx) * 0.78, cy + (p[1] - cy) * 0.78];
+  const nRoad = { N: tileAt(x, y - 1)?.road, E: tileAt(x + 1, y)?.road, S: tileAt(x, y + 1)?.road, W: tileAt(x - 1, y)?.road };
+  const roadCount = Object.values(nRoad).filter(Boolean).length;
+  const EDGES = { TR: [C.T, C.R], RB: [C.R, C.B], BL: [C.B, C.L], LT: [C.L, C.T] };
+  // sidewalk strip on any edge whose facing neighbor is NOT a road
+  ctx.fillStyle = '#cfc7bc';
+  for (const dir of ['N', 'E', 'S', 'W']) {
+    if (nRoad[dir]) continue;
+    const [p1, p2] = EDGES[EDGE_FOR_DIR[dir]];
+    const q1 = inset(p1), q2 = inset(p2);
+    ctx.beginPath();
+    ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.lineTo(q2[0], q2[1]); ctx.lineTo(q1[0], q1[1]);
+    ctx.closePath(); ctx.fill();
+  }
+  if (roadCount >= 3) {
+    // intersection: paved corner patch, no lane dashes (reads as a crossing, not a lane)
+    ctx.fillStyle = 'rgba(255,255,255,.14)';
+    diamond(cx, cy, TW * 0.55, TH * 0.55); ctx.fill();
+  } else {
+    ctx.strokeStyle = 'rgba(255,255,255,.55)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 4]);
+    for (const dir of ['N', 'E', 'S', 'W']) {
+      if (!nRoad[dir]) continue;
+      const [p1, p2] = EDGES[EDGE_FOR_DIR[dir]];
+      const mid = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(mid[0], mid[1]); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+}
+
 function drawTile(x, y) {
   const t = tiles[y][x];
   const [cx, cy] = iso(x, y);
@@ -411,19 +486,20 @@ function drawTile(x, y) {
   ctx.fillStyle = (x + y) % 2 ? '#a2c07f' : '#a8c686';
   ctx.fill();
   if (t.road) {
+    drawRoadTile(x, y, cx, cy);
+  } else if (t.utility) {
     diamond(cx, cy, TW, TH);
-    ctx.fillStyle = '#b5aca4'; ctx.fill();
-    const m = roadNeighborMask(x, y);
-    ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2;
-    const C = { T: [cx, cy - TH / 2], R: [cx + TW / 2, cy], B: [cx, cy + TH / 2], L: [cx - TW / 2, cy] };
-    if (m & 1) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(C.T[0], C.T[1]); ctx.stroke(); }
-    if (m & 2) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(C.R[0], C.R[1]); ctx.stroke(); }
-    if (m & 4) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(C.B[0], C.B[1]); ctx.stroke(); }
-    if (m & 8) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(C.L[0], C.L[1]); ctx.stroke(); }
+    ctx.fillStyle = t.utility === 'power' ? 'rgba(60,50,20,.28)' : 'rgba(30,60,90,.28)';
+    ctx.fill();
   } else if (t.zone !== 'none') {
     diamond(cx, cy, TW, TH);
     ctx.fillStyle = ZONE_TINT[t.zone]; ctx.fill();
     ctx.strokeStyle = 'rgba(0,0,0,.12)'; ctx.lineWidth = 0.8; ctx.stroke();
+  }
+  if (showCoverage && t.zone !== 'none') {
+    diamond(cx, cy, TW, TH);
+    ctx.fillStyle = t.powered && t.watered ? 'rgba(90,210,120,.3)' : t.powered || t.watered ? 'rgba(230,190,60,.28)' : 'rgba(210,70,70,.26)';
+    ctx.fill();
   }
 }
 
@@ -442,9 +518,10 @@ function drawBuilding(x, y, t) {
     const w = PROP_W[sprite] * (0.75 + Math.min(4, t.building.level) * 0.08);
     const hh = w * (img.naturalHeight / img.naturalWidth);
     ctx.globalAlpha = abandoned ? 0.5 : 1;
-    if (t.zone === 'industrial') ctx.filter = 'grayscale(55%) brightness(0.85)';
+    ctx.filter = t.zone === 'industrial' ? 'grayscale(55%) brightness(0.85)' : t.building.hue ? `hue-rotate(${t.building.hue}deg)` : 'none';
     ctx.drawImage(img, cx - w / 2, cy + TH / 2 - hh, w, hh);
     ctx.filter = 'none'; ctx.globalAlpha = 1;
+    if (t.building.blocked) drawBlockedBadge(cx, cy + TH / 2 - hh);
     return;
   }
   // vector fallback before sprites finish loading
@@ -459,12 +536,90 @@ function drawBuilding(x, y, t) {
   ctx.beginPath(); ctx.moveTo(T[0], T[1] - h); ctx.lineTo(R[0], R[1] - h); ctx.lineTo(B[0], B[1] - h); ctx.lineTo(L[0], L[1] - h);
   ctx.closePath(); ctx.fillStyle = shade(color, 1.08); ctx.fill();
   ctx.globalAlpha = 1;
+  if (t.building.blocked) drawBlockedBadge(cx, T[1] - h);
+}
+
+// small "wants to grow but has no power/water" indicator above a building's roofline
+function drawBlockedBadge(cx, topY) {
+  const y = topY - 9;
+  ctx.fillStyle = 'rgba(230,60,60,.92)';
+  ctx.beginPath(); ctx.arc(cx, y, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(cx - 2.4, y - 2.6); ctx.lineTo(cx + 2.4, y + 2.6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx + 2.4, y - 2.6); ctx.lineTo(cx - 2.4, y + 2.6); ctx.stroke();
+}
+
+// utility buildings have no sprite art, so they need enough hand-drawn detail (texture,
+// shadow, silhouette) to read as considered props rather than flat placeholder boxes —
+// a plain extruded cube next to real pixel-art sprites is exactly what looked "weird"
+function drawUtility(x, y, t) {
+  const [cx, cy] = iso(x, y);
+  ctx.fillStyle = 'rgba(0,0,0,.2)';
+  ctx.beginPath(); ctx.ellipse(cx, cy + 4, TW * 0.36, TH * 0.32, 0, 0, Math.PI * 2); ctx.fill();
+
+  if (t.utility === 'power') {
+    const h = 22;
+    const base = '#48454c';
+    const T = [cx, cy - TH / 2], R = [cx + TW / 2, cy], B = [cx, cy + TH / 2], L = [cx - TW / 2, cy];
+    ctx.beginPath(); ctx.moveTo(L[0], L[1]); ctx.lineTo(B[0], B[1]); ctx.lineTo(B[0], B[1] - h); ctx.lineTo(L[0], L[1] - h);
+    ctx.closePath(); ctx.fillStyle = shade(base, 0.7); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(B[0], B[1]); ctx.lineTo(R[0], R[1]); ctx.lineTo(R[0], R[1] - h); ctx.lineTo(B[0], B[1] - h);
+    ctx.closePath(); ctx.fillStyle = shade(base, 0.86); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(T[0], T[1] - h); ctx.lineTo(R[0], R[1] - h); ctx.lineTo(B[0], B[1] - h); ctx.lineTo(L[0], L[1] - h);
+    ctx.closePath(); ctx.fillStyle = shade(base, 1.05); ctx.fill();
+    // hazard stripe along the base of both visible faces
+    ctx.strokeStyle = '#e0b53c'; ctx.lineWidth = 3; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(L[0], L[1] - 3); ctx.lineTo(B[0], B[1] - 3); ctx.lineTo(R[0], R[1] - 3); ctx.stroke();
+    ctx.setLineDash([]);
+    // vents on both faces, echoing the window rows on real buildings
+    ctx.fillStyle = 'rgba(255,180,70,.5)';
+    for (const t2 of [0.3, 0.62]) {
+      let vx = L[0] + (B[0] - L[0]) * t2, vy = L[1] + (B[1] - L[1]) * t2;
+      ctx.fillRect(vx - 2, vy - h + 7, 4, 5);
+      vx = B[0] + (R[0] - B[0]) * t2; vy = B[1] + (R[1] - B[1]) * t2;
+      ctx.fillRect(vx - 2, vy - h + 7, 4, 5);
+    }
+    // two smokestacks
+    for (const dx of [-9, 8]) {
+      ctx.fillStyle = shade(base, 0.8);
+      ctx.fillRect(cx + dx - 3, cy - h - 22, 6, 22);
+      ctx.fillStyle = shade(base, 1.1);
+      ctx.fillRect(cx + dx - 3, cy - h - 24, 6, 3);
+    }
+    ctx.font = '13px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('⚡', cx - 9, cy - h - 30);
+  } else {
+    // water tower: four legs holding up a tank, not a solid cube
+    const legTopY = cy - 26;
+    ctx.strokeStyle = '#6b6b6b'; ctx.lineWidth = 3;
+    for (const [lx, ly] of [[cx - 13, cy - 4], [cx + 13, cy - 4], [cx - 7, cy + 9], [cx + 7, cy + 9]]) {
+      ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(cx + (lx - cx) * 0.3, legTopY); ctx.stroke();
+    }
+    const tankW = 34, tankH = 30, tankY = legTopY - tankH / 2;
+    ctx.fillStyle = shade('#5b8fae', 0.65);
+    ctx.beginPath(); ctx.ellipse(cx, tankY + tankH / 2, tankW / 2, 8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#5b8fae';
+    ctx.fillRect(cx - tankW / 2, tankY, tankW, tankH);
+    ctx.beginPath(); ctx.ellipse(cx, tankY, tankW / 2, 8, 0, 0, Math.PI * 2); ctx.fillStyle = shade('#5b8fae', 1.15); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(cx - tankW / 2 + 3, tankY + 4); ctx.lineTo(cx - tankW / 2 + 3, tankY + tankH - 4); ctx.stroke();
+    ctx.font = '13px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('\u{1F4A7}', cx, tankY + tankH / 2);
+  }
 }
 
 function drawCar(c) {
   const img = PROP_IMG.car;
   if (!ready(img)) return;
-  const [cx, cy] = iso(c.gx, c.gy);
+  // offset perpendicular to the current travel direction so cars sharing a road tile
+  // sit side by side instead of drawing exactly on top of one another
+  let hx = 0, hy = 1;
+  if (c.path[c.pathI]) {
+    const [tx, ty] = c.path[c.pathI];
+    const dx = tx - c.gx, dy = ty - c.gy, len = Math.hypot(dx, dy) || 1;
+    hx = dx / len; hy = dy / len;
+  }
+  const [cx, cy] = iso(c.gx - hy * c.laneOffset, c.gy + hx * c.laneOffset);
   const w = 34, h = w * (img.naturalHeight / img.naturalWidth);
   ctx.fillStyle = 'rgba(0,0,0,.18)';
   ctx.beginPath(); ctx.ellipse(cx, cy + 3, w * 0.42, 5, 0, 0, Math.PI * 2); ctx.fill();
@@ -531,6 +686,7 @@ function frame(nowMs) {
   for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
     const t = tiles[y][x];
     if (t.building) drawables.push({ d: x + y, f: () => drawBuilding(x, y, t) });
+    else if (t.utility) drawables.push({ d: x + y, f: () => drawUtility(x, y, t) });
   }
   for (const c of cars) drawables.push({ d: c.gx + c.gy + 0.01, f: () => drawCar(c) });
   for (const p of peds) drawables.push({ d: p.gx + p.gy + 0.01, f: () => drawPed(p, now) });

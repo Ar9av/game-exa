@@ -8,18 +8,21 @@
     "title": "Iso City Builder",
     "genre": "iso-city-builder",
     "tagline": "Zone it, road it, watch it grow",
-    "loop": "Paint zones and roads with money you have. Buildings spawn on zoned tiles with road access and grow (or abandon) each tick based on demand. No fail state — a running simulation.",
+    "loop": "Paint zones and roads with money you have. Buildings spawn on zoned tiles with road access, then grow past their starter tier only once power+water coverage reaches them, or abandon when demand craters. No fail state — a running simulation.",
     "winCondition": "false",
     "loseCondition": "false",
     "controls": {
       "movement": "camera pan (drag) + zoom (wheel)",
       "actions": [
-        { "key": "1-6", "name": "Select tool", "description": "Pan / Road / Residential / Commercial / Industrial / Bulldoze" },
-        { "key": "click / drag", "name": "Paint", "description": "Apply the selected tool to tiles under the cursor" }
+        { "key": "1-8", "name": "Select tool", "description": "Pan / Road / Residential / Commercial / Industrial / Power / Water / Bulldoze" },
+        { "key": "click / drag", "name": "Paint", "description": "Apply the selected tool to tiles under the cursor" },
+        { "key": "V", "name": "Coverage overlay", "description": "Toggle a green/amber/red power+water coverage tint over zoned tiles" }
       ]
     },
     "entities": [
-      { "id": "BUILDING", "kind": "grown", "behavior": "spawns on zoned+road-accessible tiles, grows/abandons per demand" },
+      { "id": "BUILDING", "kind": "grown", "behavior": "spawns on zoned+road-accessible tiles at starter tier; grows further only with power+water coverage, grows/abandons per demand" },
+      { "id": "POWER_PLANT", "kind": "utility", "cost": 300, "behavior": "single-tile placeable, radius-9 power coverage" },
+      { "id": "WATER_TOWER", "kind": "utility", "cost": 250, "behavior": "single-tile placeable, radius-9 water coverage" },
       { "id": "CAR", "kind": "ambient", "count": 10, "sprite": "assets/props/car_0.png", "behavior": "BFS-routes over the live road network" },
       { "id": "PEDESTRIAN", "kind": "ambient", "sprite": "assets/npc/walk_*.png", "behavior": "spawns near buildings as population grows, wanders roads" }
     ],
